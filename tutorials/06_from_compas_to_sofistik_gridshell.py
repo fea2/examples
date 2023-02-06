@@ -14,10 +14,9 @@ from compas_fea2.units import units
 units = units(system='SI_mm')
 
 compas_fea2.set_backend('compas_fea2_sofistik')
-# compas_fea2.set_backend('compas_fea2_opensees')
 
-HERE = os.path.dirname(__file__)
-TEMP = os.sep.join(HERE.split(os.sep)[:-1]+['temp'])
+my_cwd = os.getcwd()
+DIR = os.path.join(my_cwd, "data", "tutorials", "06_from_compas_to_sofistik_gridshell")
 
 mdl = Model(name='my_model')
 
@@ -26,41 +25,32 @@ ly = (10*units.m).to_base_units().magnitude
 nx = 10
 ny = 10
 mesh = Mesh.from_meshgrid(lx, nx, ly, ny)
-mesh.quads_to_triangles()
 
 mat = ElasticIsotropic(E=(210*units.GPa).to_base_units().magnitude, 
                        v=0.2, 
                        density=(7800*units("kg/m**3")).to_base_units().magnitude)
 sec = RectangularSection(w=100, h=200, material=mat)
-#prt = DeformablePart.frame_from_compas_mesh(mesh, sec)
-prt = DeformablePart.shell_from_compas_mesh(mesh, sec)
-mdl.add_part(prt)
+prt = DeformablePart.frame_from_compas_mesh(mesh, sec)
 
+mdl.add_part(prt)
 
 fixed_nodes = [prt.find_node_by_key(vertex) for vertex in list(filter(lambda v: mesh.vertex_degree(v)==2, mesh.vertices()))]
 mdl.add_fix_bc(nodes=fixed_nodes)
 
-# DEFINE THE PROBLEM
-# define a step
 step_1 = StaticStep()
 pt = prt.find_node_by_key(random.choice(list(filter(lambda v: mesh.vertex_degree(v)!=2, mesh.vertices()))))
 step_1.add_point_load(nodes=[pt],
                       z=-(10*units.kN).to_base_units().magnitude)
-# fout = FieldOutput(node_outputs=['U', 'RF'])
-# step_1.add_output(fout)
-# hout = HistoryOutput('hout_test')
 
-# set-up the problem
-prb = Problem('00_simple_problem', mdl)
+#The name "from_compas_to_sofistik_gridshell" will be the .dat file name to run in sofistik
+prb = Problem('from_compas_to_sofistik_gridshell', mdl)
 prb.add_step(step_1)
 prb.summary()
 
 mdl.add_problem(problem=prb)
-print(Path(TEMP).joinpath(prb.name))
-mdl.analyse(problems=[prb], path=Path(TEMP).joinpath(prb.name), verbose=True)
-# mdl.show()
 
-prb.convert_results_to_sqlite(Path(TEMP).joinpath(prb.name, prb.name))
+#the location where the file from_compas_to_sofistik_gridshell.dat will be saved.
+prb.path = DIR
 
-# prb.show_deformed(scale_factor=100)
-prb.show_displacements()
+#command to generate the .dat file.
+prb.write_input_file()
