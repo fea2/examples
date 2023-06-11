@@ -1,17 +1,15 @@
 import time
-from compas_view2.app import App
-from compas.geometry import Point, Polyline, Bezier
-
-from compas.colors import ColorMap, Color
-
 import os
+from random import choice
 from pathlib import Path
 
-from random import choice
-from compas.geometry import Point, Vector
+from compas.geometry import Point, Polyline, Bezier, Vector
 from compas.datastructures import Mesh, mesh_thicken
+from compas.colors import ColorMap, Color
 from compas.utilities import geometric_key_xy
+
 from compas_gmsh.models import MeshModel
+
 from compas_view2.app import App
 from compas_view2.shapes import Arrow
 

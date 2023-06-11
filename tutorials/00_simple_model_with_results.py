@@ -20,7 +20,7 @@ compas_fea2.set_backend('compas_fea2_opensees')
 HERE = os.path.dirname(__file__)
 TEMP = os.sep.join(HERE.split(os.sep)[:-1]+['temp'])
 
-mdl = Model(name='my_model')
+mdl = Model(name='simple_frame')
 
 lx = (10*units.m).to_base_units().magnitude
 ly = (10*units.m).to_base_units().magnitude
@@ -57,10 +57,5 @@ prb.summary()
 
 mdl.add_problem(problem=prb)
 print(Path(TEMP).joinpath(prb.name))
-mdl.analyse(problems=[prb], path=Path(TEMP).joinpath(prb.name), verbose=True)
-mdl.show()
-
-prb.convert_results_to_sqlite(Path(TEMP).joinpath(prb.name, prb.name))
-
-prb.show_deformed(scale_factor=100)
-prb.show_displacements()
+mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
+prb.show_deformed(scale_factor=1000)
