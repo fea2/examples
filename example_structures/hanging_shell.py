@@ -16,9 +16,10 @@ from compas_fea2.problem import Problem, StaticStep, FieldOutput
 from compas_fea2.units import units
 units = units(system='SI_mm')
 
-# compas_fea2.set_backend('compas_fea2_abaqus') #chage this to the backend implementation of your choice
-# compas_fea2.set_backend('compas_fea2_sofistik') #chage this to the backend implementation of your choice
-compas_fea2.set_backend('compas_fea2_opensees') #chage this to the backend implementation of your choice
+#chage this to the backend implementation of your choice
+compas_fea2.set_backend('compas_fea2_abaqus') 
+# compas_fea2.set_backend('compas_fea2_sofistik') 
+# compas_fea2.set_backend('compas_fea2_opensees')
 
 HERE = os.path.dirname(__file__)
 DATA = os.sep.join(HERE.split(os.sep)[:-1]+['data'])
@@ -26,7 +27,7 @@ TEMP = os.sep.join(HERE.split(os.sep)[:-1]+['temp'])
 
 mdl = Model(name='hanging_shell')
 
-# Get the waffle geometry
+# Get the geometry from the obj file (and scale it to mm)
 mesh = Mesh.from_obj(os.path.join(DATA, 'hanging_shell', 'tofea_f.obj'))
 S = Scale.from_factors([1000.] * 3)
 mesh.transform(S)
@@ -42,7 +43,7 @@ print("discretization complete!")
 # Define mechanical properties and panel thickness
 E = 10*units.GPa
 v = 0.2
-rho = 500*units("kg/m**3")
+rho = 1500*units("kg/m**3")
 t = 20*units.mm
 
 # Define material and section (here it is the same for each element)
@@ -54,37 +55,41 @@ sec = ShellSection(t=t.to_base_units().magnitude,
 
 # Define a deformable part using the mesh geometry and the mechanical properties
 prt = DeformablePart.shell_from_compas_mesh(mesh=compas_mesh, section=sec)
-# from_gmsh(gmshModel=model, section=sec)
 mdl.add_part(prt)
 
 # fix the base
 bottom_plane = Plane([0,0,0], [0,0,1])
 fixed_nodes = prt.find_nodes_on_plane(bottom_plane)
 mdl.add_fix_bc(nodes=fixed_nodes)
-# mdl.show()
+mdl.show()
 
 # DEFINE THE PROBLEM
 prb = Problem('gravity', mdl)
+
 # define a Linear Elastic Static analysis
 step_1 = StaticStep()
+
 # Define the loads
-step_1.add_point_load(prt.nodes, z=-(10*units.kN).to_base_units().magnitude)
+step_1.add_gravity_load(z=0.,x=-1)
+# step_1.add_point_load(prt.nodes, z=-(10*units.kN).to_base_units().magnitude)
+
 # decide what information to save
 fout = FieldOutput(node_outputs=['U', 'RF'],
-                   element_outputs=['S'])
+                   element_outputs=['S', 'SF'])
 step_1.add_output(fout)
 
 # Add the step to the problem
 prb.add_step(step_1)
-prb.summary()
+# prb.summary()
 
 # Add the problem to the model
 mdl.add_problem(problem=prb)
-mdl.summary()
+# mdl.summary()
 
+# ANALYSIS and RESULTS
 # Run the analysis
-# mdl.analyse(problems=[prb], path=Path(TEMP).joinpath(prb.name), verbose=True)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 print(f'Analysis results saved in {prb.path}')
-# prb.show_displacements(draw_bcs=1000)
-prb.show_deformed()
+
+prb.show_displacements()
+# prb.show_deformed()
