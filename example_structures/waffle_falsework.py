@@ -68,7 +68,7 @@ step_1 = StaticStep()
 # Define the loads
 top_plane = Plane([0, 0, 1000], [0, 0, 1])
 loaded_nodes = prt.find_nodes_on_plane(top_plane)
-step_1.add_point_load(nodes=loaded_nodes,
+step_1.add_node_load(nodes=loaded_nodes,
                       z=-(10*units.N).to_base_units().magnitude)
 # step_1.add_gravity_load(g=9810)
 # decide what information to save
