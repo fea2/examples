@@ -1,24 +1,22 @@
 import os
-from pathlib import Path
-import random
 
-import compas
 from compas.datastructures import Mesh
-from compas.geometry import Translation, Vector, Scale, Frame, Plane
+from compas.geometry import Scale, Plane
 
 from compas_gmsh.models import MeshModel
 
 import compas_fea2
-from compas_fea2.model import Model, DeformablePart, Node
-from compas_fea2.model import RectangularSection, ElasticIsotropic, ShellSection
+from compas_fea2.model import Model, DeformablePart
+from compas_fea2.model import ElasticIsotropic, ShellSection
 from compas_fea2.problem import Problem, StaticStep, FieldOutput
 
 from compas_fea2.units import units
 units = units(system='SI_mm')
 
-compas_fea2.set_backend('compas_fea2_abaqus') #chage this to the backend implementation of your choice
-# compas_fea2.set_backend('compas_fea2_sofistik') #chage this to the backend implementation of your choice
-# compas_fea2.set_backend('compas_fea2_opensees') #chage this to the backend implementation of your choice
+# chage this to the backend implementation of your choice
+# compas_fea2.set_backend('compas_fea2_abaqus')
+# compas_fea2.set_backend('compas_fea2_sofistik')
+compas_fea2.set_backend('compas_fea2_opensees')
 
 HERE = os.path.dirname(__file__)
 DATA = os.sep.join(HERE.split(os.sep)[:-1]+['data'])
@@ -46,10 +44,10 @@ rho = 500*units("kg/m**3")
 t = 20*units.mm
 
 # Define material and section (here it is the same for each element)
-mat = ElasticIsotropic(E=E.to_base_units().magnitude, 
-                       v=v, 
+mat = ElasticIsotropic(E=E.to_base_units().magnitude,
+                       v=v,
                        density=rho.to_base_units().magnitude)
-sec = ShellSection(t=t.to_base_units().magnitude, 
+sec = ShellSection(t=t.to_base_units().magnitude,
                    material=mat)
 
 # Define a deformable part using the mesh geometry and the mechanical properties
@@ -58,7 +56,7 @@ prt = DeformablePart.shell_from_compas_mesh(mesh=compas_mesh, section=sec)
 mdl.add_part(prt)
 
 # fix the base
-bottom_plane = Plane([0,0,0], [0,0,1])
+bottom_plane = Plane([0, 0, 0], [0, 0, 1])
 fixed_nodes = prt.find_nodes_on_plane(bottom_plane)
 mdl.add_fix_bc(nodes=fixed_nodes)
 # mdl.show()
@@ -68,9 +66,9 @@ prb = Problem('point_loads', mdl)
 # define a Linear Elastic Static analysis
 step_1 = StaticStep()
 # Define the loads
-top_plane = Plane([0,0,1000], [0,0,1])
+top_plane = Plane([0, 0, 1000], [0, 0, 1])
 loaded_nodes = prt.find_nodes_on_plane(top_plane)
-step_1.add_point_load(nodes=loaded_nodes,
+step_1.add_node_load(nodes=loaded_nodes,
                       z=-(10*units.N).to_base_units().magnitude)
 # step_1.add_gravity_load(g=9810)
 # decide what information to save

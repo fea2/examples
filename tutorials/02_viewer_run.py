@@ -87,7 +87,7 @@ stp = StaticStep()
 
 # Add the load
 pt = prt.find_closest_nodes_to_point(poa_coordinates, distance=150)
-stp.add_point_load(nodes=pt,
+stp.add_node_load(nodes=pt,
                     z=-(10*units.kN).to_base_units().magnitude)
 
 # Ask for field outputs

@@ -44,7 +44,7 @@ mdl.add_fix_bc(nodes=fixed_nodes)
 # define a step
 step_1 = StaticStep()
 pt = prt.find_node_by_key(random.choice(list(filter(lambda v: mesh.vertex_degree(v)!=2, mesh.vertices()))))
-step_1.add_point_load(nodes=[pt],
+step_1.add_node_load(nodes=[pt],
                       z=-(10*units.kN).to_base_units().magnitude)
 fout = FieldOutput(node_outputs=['U', 'RF'])
 step_1.add_output(fout)

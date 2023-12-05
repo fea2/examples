@@ -16,7 +16,7 @@ from compas_fea2.problem import Problem, StaticStep, FieldOutput
 from compas_fea2.units import units
 units = units(system='SI_mm')
 
-#chage this to the backend implementation of your choice
+# chage this to the backend implementation of your choice
 # compas_fea2.set_backend('compas_fea2_abaqus') 
 # compas_fea2.set_backend('compas_fea2_sofistik') 
 compas_fea2.set_backend('compas_fea2_opensees')
@@ -70,8 +70,8 @@ prb = Problem('gravity', mdl)
 step_1 = StaticStep()
 
 # Define the loads
-step_1.add_gravity_load(z=0.,x=-1)
-step_1.add_point_load([list(prt.nodes)[200]], z=-(1*units.kN).to_base_units().magnitude)
+step_1.add_gravity_load(z=0., x=-1)
+# step_1.add_point_load(prt.nodes, z=-(10*units.kN).to_base_units().magnitude)
 
 # decide what information to save
 fout = FieldOutput(node_outputs=['U', 'RF'],

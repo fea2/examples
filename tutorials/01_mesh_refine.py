@@ -133,7 +133,7 @@ stp = StaticStep()
 
 # Add the load
 pt = prt.find_closest_nodes_to_point(poa_coordinates, distance=150)
-stp.add_point_load(nodes=pt,
+stp.add_node_load(nodes=pt,
                       z=-(10*units.kN).to_base_units().magnitude)
 
 # Ask for field outputs
@@ -151,5 +151,4 @@ mdl.add_problem(problem=prb)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 
 # Show Results
-# prb.show_displacements(draw_loads=0.1, model_sf=0.5)
-prb.show_deformed(draw_loads=0.1, scale_factor=10000, model_sf=1)
+prb.show_displacements(draw_loads=0.1)
