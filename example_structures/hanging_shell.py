@@ -17,9 +17,9 @@ from compas_fea2.units import units
 units = units(system='SI_mm')
 
 #chage this to the backend implementation of your choice
-compas_fea2.set_backend('compas_fea2_abaqus') 
+# compas_fea2.set_backend('compas_fea2_abaqus') 
 # compas_fea2.set_backend('compas_fea2_sofistik') 
-# compas_fea2.set_backend('compas_fea2_opensees')
+compas_fea2.set_backend('compas_fea2_opensees')
 
 HERE = os.path.dirname(__file__)
 DATA = os.sep.join(HERE.split(os.sep)[:-1]+['data'])
@@ -61,7 +61,7 @@ mdl.add_part(prt)
 bottom_plane = Plane([0,0,0], [0,0,1])
 fixed_nodes = prt.find_nodes_on_plane(bottom_plane)
 mdl.add_fix_bc(nodes=fixed_nodes)
-mdl.show()
+# mdl.show()
 
 # DEFINE THE PROBLEM
 prb = Problem('gravity', mdl)
@@ -71,7 +71,7 @@ step_1 = StaticStep()
 
 # Define the loads
 step_1.add_gravity_load(z=0.,x=-1)
-# step_1.add_point_load(prt.nodes, z=-(10*units.kN).to_base_units().magnitude)
+step_1.add_point_load([list(prt.nodes)[200]], z=-(1*units.kN).to_base_units().magnitude)
 
 # decide what information to save
 fout = FieldOutput(node_outputs=['U', 'RF'],
@@ -90,6 +90,7 @@ mdl.add_problem(problem=prb)
 # Run the analysis
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 print(f'Analysis results saved in {prb.path}')
-
-prb.show_displacements()
+# prb.show_nodes_field_vector(field_name='U', scale_factor=1000, draw_bcs=500,  draw_loads=0.1)
+prb.show_nodes_field('U', 'U3')
+# prb.show_deformed(scale_factor=100, draw_bcs=100, draw_loads=0.2)
 # prb.show_deformed()

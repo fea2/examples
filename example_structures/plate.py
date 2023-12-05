@@ -9,6 +9,7 @@ import compas_fea2
 from compas_fea2.model import Model, DeformablePart
 from compas_fea2.model import ElasticIsotropic, ShellSection
 from compas_fea2.problem import Problem, StaticStep, FieldOutput
+from compas_fea2.results import NodeFieldResults
 
 from compas_fea2.units import units
 units = units(system='SI_mm')
@@ -79,7 +80,7 @@ for vertex in plate.vertices_where({'vertex_degree': 2}):
     location = plate.vertex_coordinates(vertex)
     mdl.add_fix_bc(nodes=prt.find_nodes_by_location(location, distance=150))
 
-# mdl.summary()
+mdl.summary()
 # mdl.show()
 
 # Initialize a step
@@ -105,6 +106,17 @@ mdl.add_problem(problem=prb)
 # mdl.analyse(problems=[prb], path=Path(TEMP).joinpath(prb.name), verbose=True)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 
+disp = NodeFieldResults(field_name='U', step=stp)
+# print(disp.max.value)
+# print(disp.min.value)
+
+
 # Show Results
-# prb.show_displacements(show_deformed=100)
-# prb.show_deformed()
+# prb.show_nodes_field_vector(field_name='U', scale_factor=300, draw_bcs=500,  draw_loads=0.1)
+# prb.show_nodes_vector(field='U',component='U3', draw_bcs=1000, draw_loads=0.1)
+prb.show_nodes_field(field_name='U',component='U3', draw_bcs=1000, draw_loads=0.1)
+# prb.show_displacements(draw_bcs=1000, draw_loads=0.1)
+# prb.show_deformed(scale_factor=1000, draw_bcs=1000, draw_loads=0.1)
+# deformed_model = prb.get_deformed_model()
+# print(deformed_model)
+

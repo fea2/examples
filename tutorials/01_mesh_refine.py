@@ -86,7 +86,7 @@ viewer.view.camera.distance = 10
 
 viewer.view.camera.target = [5000, 5000, 100]
 viewer.view.camera.position = [5000, 0, 5000]
-viewer.view.camera.near = 10
+viewer.view.camera.near = 1
 viewer.view.camera.far = 100000
 viewer.view.camera.scale = 1000
 viewer.view.grid.cell_size = 1000
@@ -151,4 +151,5 @@ mdl.add_problem(problem=prb)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 
 # Show Results
-prb.show_displacements(draw_loads=100)
+# prb.show_displacements(draw_loads=0.1, model_sf=0.5)
+prb.show_deformed(draw_loads=0.1, scale_factor=10000, model_sf=1)
