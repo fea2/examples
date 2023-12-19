@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 import random
 
-import compas
 from compas.datastructures import Mesh
 
 import compas_fea2
