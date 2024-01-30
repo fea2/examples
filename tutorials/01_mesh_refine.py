@@ -110,13 +110,14 @@ viewer.run()
 # Initialize model
 mdl = Model(name='mesh_refine')
 # Define some properties
-mat = ElasticIsotropic(E=(210*units.GPa).to_base_units().magnitude, 
+mat = ElasticIsotropic(E=210*units.GPa, 
                        v=0.2, 
-                       density=(7800*units("kg/m**3")).to_base_units().magnitude)
+                       density=7800*units("kg/m**3"))
 sec = SolidSection(material=mat)
 
 # Convert the gmsh model in a compas_fea2 Part
 prt = DeformablePart.from_gmsh(gmshModel=model, section=sec)
+prt._boundary_mesh = plate  
 prt.ndf=3 # this is needed for the opensees FourNodeTetrahedron model
 prt._discretized_boundary_mesh = solid_mesh
 mdl.add_part(prt)
@@ -124,7 +125,7 @@ mdl.add_part(prt)
 # Set boundary conditions in the corners
 for vertex in mesh.vertices_where({'vertex_degree': 2}):
     location = mesh.vertex_coordinates(vertex)
-    mdl.add_fix_bc(nodes=prt.find_nodes_by_location(location, distance=150))
+    mdl.add_pin_bc(nodes=prt.find_nodes_by_location(location, distance=150))
 
 # mdl.summary()
 
@@ -134,7 +135,7 @@ stp = StaticStep()
 # Add the load
 pt = prt.find_closest_nodes_to_point(poa_coordinates, distance=150)
 stp.add_node_load(nodes=pt,
-                      z=-(10*units.kN).to_base_units().magnitude)
+                      z=-10*units.kN)
 
 # Ask for field outputs
 fout = FieldOutput(node_outputs=['U', 'RF'],
@@ -151,4 +152,5 @@ mdl.add_problem(problem=prb)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 
 # Show Results
-prb.show_displacements(draw_loads=0.1)
+# prb.show_displacements_contour(draw_loads=0.1, draw_bcs=400)
+prb.show_deformed(scale_factor=5000, draw_loads=0.1, draw_bcs=0.3)

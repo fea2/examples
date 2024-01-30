@@ -58,13 +58,14 @@ solid_mesh = model.mesh_to_compas()
 # Initialize model
 mdl = Model(name='mesh_refine')
 # Define some properties
-mat = ElasticIsotropic(E=(210*units.GPa).to_base_units().magnitude,
+mat = ElasticIsotropic(E=210*units.GPa,
                        v=0.2,
-                       density=(7800*units("kg/m**3")).to_base_units().magnitude)
+                       density=7800*units("kg/m**3"))
 sec = SolidSection(material=mat)
 
 # Convert the gmsh model in a compas_fea2 Part
 prt = DeformablePart.from_gmsh(gmshModel=model, section=sec)
+prt._boundary_mesh = plate
 prt.ndf = 3  # this is needed for the opensees FourNodeTetrahedron model
 prt._discretized_boundary_mesh = solid_mesh
 mdl.add_part(prt)
@@ -97,4 +98,4 @@ stp.add_output(FieldOutput(node_outputs=['U']))
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 
 # Show Results
-prb.show_displacements(draw_loads=5, draw_bcs=500)
+prb.show_nodes_field_contour('U', 1, draw_loads=5, draw_bcs=500)

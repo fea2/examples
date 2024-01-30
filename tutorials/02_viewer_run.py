@@ -66,9 +66,9 @@ solid_mesh = model.mesh_to_compas()
 # Initialize model
 mdl = Model()
 # Define some properties
-mat = ElasticIsotropic(E=(210*units.GPa).to_base_units().magnitude, 
+mat = ElasticIsotropic(E=210*units.GPa, 
                     v=0.2, 
-                    density=(7800*units("kg/m**3")).to_base_units().magnitude)
+                    density=7800*units("kg/m**3"))
 sec = SolidSection(material=mat)
 
 # Convert the gmsh model in a compas_fea2 Part
@@ -88,7 +88,7 @@ stp = StaticStep()
 # Add the load
 pt = prt.find_closest_nodes_to_point(poa_coordinates, distance=150)
 stp.add_node_load(nodes=pt,
-                    z=-(10*units.kN).to_base_units().magnitude)
+                    z=-10*units.kN)
 
 # Ask for field outputs
 fout = FieldOutput(node_outputs=['U', 'RF'])

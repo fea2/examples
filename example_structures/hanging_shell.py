@@ -34,7 +34,7 @@ mesh.transform(S)
 
 # Use GMSH to discretize the geometry
 print('generating discretization...')
-model = MeshModel.from_mesh(mesh, targetlength=250)
+model = MeshModel.from_mesh(mesh, targetlength=100)
 model.heal()
 model.generate_mesh(2)
 compas_mesh = model.mesh_to_compas()
@@ -47,10 +47,10 @@ rho = 1500*units("kg/m**3")
 t = 20*units.mm
 
 # Define material and section (here it is the same for each element)
-mat = ElasticIsotropic(E=E.to_base_units().magnitude, 
+mat = ElasticIsotropic(E=E, 
                        v=v, 
-                       density=rho.to_base_units().magnitude)
-sec = ShellSection(t=t.to_base_units().magnitude, 
+                       density=rho)
+sec = ShellSection(t=t, 
                    material=mat)
 
 # Define a deformable part using the mesh geometry and the mechanical properties
@@ -60,7 +60,7 @@ mdl.add_part(prt)
 # fix the base
 bottom_plane = Plane([0,0,0], [0,0,1])
 fixed_nodes = prt.find_nodes_on_plane(bottom_plane)
-mdl.add_fix_bc(nodes=fixed_nodes)
+mdl.add_pin_bc(nodes=fixed_nodes)
 # mdl.show()
 
 # DEFINE THE PROBLEM
@@ -70,12 +70,12 @@ prb = Problem('gravity', mdl)
 step_1 = StaticStep()
 
 # Define the loads
-step_1.add_gravity_load(z=0., x=-1)
+step_1.add_gravity_load(g=9.81*units("m/s**2"), z=-1.)
 # step_1.add_point_load(prt.nodes, z=-(10*units.kN).to_base_units().magnitude)
 
 # decide what information to save
 fout = FieldOutput(node_outputs=['U', 'RF'],
-                   element_outputs=['S', 'SF'])
+                   element_outputs=['S2D', 'SF'])
 step_1.add_output(fout)
 
 # Add the step to the problem
@@ -90,7 +90,9 @@ mdl.add_problem(problem=prb)
 # Run the analysis
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 print(f'Analysis results saved in {prb.path}')
-# prb.show_nodes_field_vector(field_name='U', scale_factor=1000, draw_bcs=500,  draw_loads=0.1)
-prb.show_nodes_field('U', 'U3')
-# prb.show_deformed(scale_factor=100, draw_bcs=100, draw_loads=0.2)
+prb.show_nodes_field_contour('S', 3)
+# prb.show_nodes_field_vector('U', vector_sf=500)
+# prb.show_elements_field_vector('S', vector_sf=50)
+prb.show_elements_field_vector('S2D', vector_sf=50, draw_bcs=0.1, draw_loads=0.1)
+prb.show_deformed(scale_factor=500, draw_bcs=0.2, draw_loads=10, opacity=1., original=0.25)
 # prb.show_deformed()

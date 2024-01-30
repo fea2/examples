@@ -21,16 +21,16 @@ TEMP = os.sep.join(HERE.split(os.sep)[:-1]+['temp'])
 
 mdl = Model(name='simple_frame')
 
-lx = (10*units.m).to_base_units().magnitude
-ly = (10*units.m).to_base_units().magnitude
+lx = 10_000
+ly = 10_000
 nx = 10
 ny = 10
 mesh = Mesh.from_meshgrid(lx, nx, ly, ny)
 
 
-mat = ElasticIsotropic(E=(210*units.GPa).to_base_units().magnitude, 
+mat = ElasticIsotropic(E=210*units.GPa, 
                        v=0.2, 
-                       density=(7800*units("kg/m**3")).to_base_units().magnitude)
+                       density=7800*units("kg/m**3"))
 sec = RectangularSection(w=100, h=200, material=mat)
 prt = DeformablePart.frame_from_compas_mesh(mesh, sec)
 
@@ -44,8 +44,9 @@ mdl.add_fix_bc(nodes=fixed_nodes)
 step_1 = StaticStep()
 pt = prt.find_node_by_key(random.choice(list(filter(lambda v: mesh.vertex_degree(v)!=2, mesh.vertices()))))
 step_1.add_node_load(nodes=[pt],
-                      z=-(10*units.kN).to_base_units().magnitude)
-fout = FieldOutput(node_outputs=['U', 'RF'])
+                      z=-10*units.kN)
+fout = FieldOutput(node_outputs=['U', 'RF'],
+                   element_outputs=['SF'])
 step_1.add_output(fout)
 # hout = HistoryOutput('hout_test')
 
@@ -55,6 +56,5 @@ prb.add_step(step_1)
 prb.summary()
 
 mdl.add_problem(problem=prb)
-print(Path(TEMP).joinpath(prb.name))
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
-prb.show_deformed(scale_factor=1000)
+prb.show_deformed(scale_factor=1000, draw_loads=0.1, draw_bcs=0.25)
