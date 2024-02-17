@@ -1,6 +1,6 @@
 import os
 
-from compas.datastructures import Mesh, mesh_thicken
+from compas.datastructures import Mesh
 from compas.utilities import geometric_key_xy
 from compas_gmsh.models import MeshModel
 

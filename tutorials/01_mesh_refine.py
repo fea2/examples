@@ -2,8 +2,8 @@ import os
 from pathlib import Path
 
 from random import choice
+from compas.datastructures import Mesh
 from compas.geometry import Point, Vector
-from compas.datastructures import Mesh, mesh_thicken
 from compas.utilities import geometric_key_xy
 from compas_gmsh.models import MeshModel
 from compas_view2.app import App
@@ -31,7 +31,7 @@ ly = (10*units.m).to_base_units().magnitude
 nx = 5
 ny = 5
 mesh = Mesh.from_meshgrid(lx, nx, ly, ny)
-plate = mesh_thicken(mesh, 100)
+plate = mesh.thickened(100)
 
 # ==============================================================================
 # Select random internal vertex for load application
@@ -68,7 +68,7 @@ model.generate_mesh(3)
 # ==============================================================================
 
 solid_mesh = model.mesh_to_compas()
-lengths = [solid_mesh.edge_length(*edge) for edge in solid_mesh.edges()]
+lengths = [solid_mesh.edge_length(edge) for edge in solid_mesh.edges()]
 print('Min length: ', min(lengths))
 print('Max length: ', max(lengths))
 

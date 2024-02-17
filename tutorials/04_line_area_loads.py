@@ -1,7 +1,7 @@
 import os
 from random import choice
 from compas.geometry import Polyline, Polygon
-from compas.datastructures import Mesh, mesh_thicken
+from compas.datastructures import Mesh
 from compas_gmsh.models import MeshModel
 
 import compas_fea2
@@ -27,7 +27,8 @@ nx = 5
 ny = 5
 mesh = Mesh.from_meshgrid(lx, nx, ly, ny)
 plate_thickness = (10*units.cm).to_base_units().magnitude
-plate = mesh_thicken(mesh, plate_thickness)
+plate = mesh.copy()
+plate.thickened(plate_thickness)
 
 # ==============================================================================
 # Select random internal vertices for the point, line and area load application

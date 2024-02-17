@@ -1,7 +1,7 @@
 import os
 
 from random import choice
-from compas.datastructures import Mesh, mesh_thicken
+from compas.datastructures import Mesh
 from compas.utilities import geometric_key_xy
 from compas_gmsh.models import MeshModel
 
@@ -53,7 +53,7 @@ model.generate_mesh(2)
 # ==============================================================================
 
 compas_mesh = model.mesh_to_compas()
-lengths = [compas_mesh.edge_length(*edge) for edge in compas_mesh.edges()]
+lengths = [compas_mesh.edge_length(edge) for edge in compas_mesh.edges()]
 print('Min length: ', min(lengths))
 print('Max length: ', max(lengths))
 
@@ -78,7 +78,7 @@ mdl.add_part(prt)
 # Set boundary conditions in the corners
 for vertex in plate.vertices_where({'vertex_degree': 2}):
     location = plate.vertex_coordinates(vertex)
-    mdl.add_fix_bc(nodes=prt.find_nodes_by_location(location, distance=150))
+    mdl.add_pin_bc(nodes=prt.find_nodes_by_location(location, distance=150))
 
 mdl.summary()
 # mdl.show()
@@ -112,11 +112,11 @@ disp = NodeFieldResults(field_name='U', step=stp)
 
 
 # Show Results
-# prb.show_nodes_field_vector(field_name='U', scale_factor=300, draw_bcs=500,  draw_loads=0.1)
+# prb.show_nodes_field_vector(field_name='U', scale_factor=100, draw_bcs=1,  draw_loads=0.1)
 # prb.show_nodes_vector(field='U',component='U3', draw_bcs=1000, draw_loads=0.1)
-prb.show_nodes_field(field_name='U',component='U3', draw_bcs=1000, draw_loads=0.1)
-# prb.show_displacements(draw_bcs=1000, draw_loads=0.1)
-# prb.show_deformed(scale_factor=1000, draw_bcs=1000, draw_loads=0.1)
+# prb.show_nodes_field(field_name='U',component='U3', draw_bcs=1000, draw_loads=0.1)
+# prb.show_displacements(draw_bcs=1, draw_loads=0.1)
+prb.show_deformed(scale_factor=300, draw_bcs=1, draw_loads=0.1)
 # deformed_model = prb.get_deformed_model()
 # print(deformed_model)
 
