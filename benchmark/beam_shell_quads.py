@@ -6,7 +6,7 @@ import compas_fea2
 from compas_fea2.model import Model, DeformablePart
 from compas_fea2.model import ElasticIsotropic, ShellSection
 from compas_fea2.problem import Problem, StaticStep, FieldOutput
-from compas_fea2.results import NodeFieldResults
+from compas_fea2.results import DisplacementFieldResults
 
 from compas_fea2.units import units
 units = units(system='SI_mm')
@@ -76,7 +76,7 @@ mdl.add_problem(problem=prb)
 # Analyze and extracte results to SQLite database
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 
-disp = NodeFieldResults(field_name='U', step=stp)
+disp = DisplacementFieldResults(field_name='U', step=stp)
 print("Maximum displacement: ", disp.max)
 print("Minimum displacement: ", disp.min)
 

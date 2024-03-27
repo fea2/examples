@@ -8,7 +8,7 @@ import compas_fea2
 from compas_fea2.model import Model, DeformablePart
 from compas_fea2.model import ElasticIsotropic, ShellSection
 from compas_fea2.problem import Problem, StaticStep, FieldOutput
-from compas_fea2.results import NodeFieldResults, ElementFieldResults
+from compas_fea2.results import DisplacementFieldResults, StressFieldResults
 
 from compas_fea2.units import units
 units = units(system='SI_mm')
@@ -81,11 +81,11 @@ mdl.add_problem(problem=prb)
 # mdl.analyse(problems=[prb], path=Path(TEMP).joinpath(prb.name), verbose=True)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 
-disp = NodeFieldResults(field_name='U', step=stp)
+disp = DisplacementFieldResults(field_name='U', step=stp)
 # print(disp.max.value)
 # print(disp.min.value)
 
-stress_field = ElementFieldResults('S2D', stp)
+stress_field = StressFieldResults('S2D', stp)
 
 for r in stress_field.results:
     print(r.von_mises_stress)

@@ -5,13 +5,14 @@ import random
 import compas
 from compas.datastructures import Mesh
 from compas.geometry import Translation, Vector, Scale, Frame, Plane
+from compas.colors import ColorMap, Color
 
 from compas_gmsh.models import MeshModel
 
 import compas_fea2
 from compas_fea2.model import Model, DeformablePart, Node
 from compas_fea2.model import RectangularSection, ElasticIsotropic, ShellSection
-from compas_fea2.problem import Problem, StaticStep, FieldOutput
+from compas_fea2.problem import Problem, StaticStep, FieldOutput, LoadCombination
 
 from compas_fea2.units import units
 units = units(system='SI_mm')
@@ -64,35 +65,42 @@ mdl.add_pin_bc(nodes=fixed_nodes)
 # mdl.show()
 
 # DEFINE THE PROBLEM
-prb = Problem('gravity', mdl)
-
+prb = mdl.add_problem(name='SLS')
 # define a Linear Elastic Static analysis
-step_1 = StaticStep()
-
+step_1 = prb.add_static_step()
+# Create a load combination
+step_1.combination = LoadCombination.SLS()
 # Define the loads
-step_1.add_gravity_load(g=9.81*units("m/s**2"), z=-1.)
-# step_1.add_point_load(prt.nodes, z=-(10*units.kN).to_base_units().magnitude)
+step_1.add_gravity_load_pattern(parts=prt, g=9.81*units("m/s**2"), z=-1., load_case="DL")
 
 # decide what information to save
 fout = FieldOutput(node_outputs=['U', 'RF'],
                    element_outputs=['S2D', 'SF'])
 step_1.add_output(fout)
 
-# Add the step to the problem
-prb.add_step(step_1)
 # prb.summary()
+# prb.show(draw_bcs=0.5, draw_loads=100)
 
 # Add the problem to the model
-mdl.add_problem(problem=prb)
 # mdl.summary()
 
 # ANALYSIS and RESULTS
 # Run the analysis
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 print(f'Analysis results saved in {prb.path}')
+
+disp = prb.displacement_field 
+react = prb.reaction_field
+stress = prb.stress_field
+
+cmap = ColorMap.from_mpl('viridis')
+prb.show_nodes_field_contour(disp, component=3, draw_reactions=0.2, draw_loads=0.5, draw_bcs=0.1, cmap=cmap)
+prb.show_stress_contours(stress_type="von_mises_stress", side="top", draw_reactions=0.02, draw_loads=0.05, draw_bcs=0.5, cmap=cmap)
+prb.show_elements_field_vector(stress, vector_sf=10, draw_bcs=1)
+
 # prb.show_nodes_field_contour('S', 3)
 # prb.show_nodes_field_vector('U', vector_sf=500)
 # prb.show_elements_field_vector('S', vector_sf=50)
-prb.show_elements_field_vector('S2D', vector_sf=50, draw_bcs=0.5, draw_loads=0.1)
+# prb.show_elements_field_vector('S2D', vector_sf=50, draw_bcs=0.5)
 # prb.show_deformed(scale_factor=500, draw_bcs=0.5, draw_loads=1000, opacity=1., original=0.25)
 # prb.show_deformed()

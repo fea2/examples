@@ -1,12 +1,13 @@
 import os
 
 from compas.datastructures import Mesh
+from compas.colors import ColorMap, Color
 
 import compas_fea2
 from compas_fea2.model import Model, DeformablePart
 from compas_fea2.model import ElasticIsotropic, ShellSection
-from compas_fea2.problem import Problem, StaticStep, FieldOutput
-from compas_fea2.results import NodeFieldResults
+from compas_fea2.problem import Problem, StaticStep, FieldOutput, LoadCombination
+from compas_fea2.results import DisplacementFieldResults
 
 from compas_fea2.units import units
 units = units(system='SI_mm')
@@ -33,9 +34,9 @@ plate = Mesh.from_meshgrid(lx, nx, ly, ny)
 # Initialize model
 mdl = Model(name='plate')
 # Define some properties
-mat = ElasticIsotropic(E=(210*units.GPa).to_base_units().magnitude, 
+mat = ElasticIsotropic(E=210*units.GPa, 
                        v=0.2, 
-                       density=(7800*units("kg/m**3")).to_base_units().magnitude)
+                       density=7800*units("kg/m**3"))
 sec = ShellSection(material=mat, t=100)
 
 # Convert the gmsh model in a compas_fea2 Part
@@ -51,40 +52,43 @@ for vertex in plate.vertices():
 mdl.summary()
 # mdl.show(draw_bcs=0.1)
 
-# Initialize a step
-stp = StaticStep()
+prb = mdl.add_problem(name='SLS')
+stp = prb.add_static_step()
+stp.combination = LoadCombination.SLS()
 
 # Add the load
+loaded_nodes=[]
 for vertex in plate.vertices():
     location = plate.vertex_coordinates(vertex)
     if location[0] == lx:
-        stp.add_node_load(nodes=prt.find_nodes_by_location(location, distance=1),
-                          y=-(1*units.kN).to_base_units().magnitude)
+        loaded_nodes.append(*prt.find_nodes_by_location(location, distance=1))
+stp.add_node_pattern(loaded_nodes, y=-1*units.kN, load_case='LL')
+
 
 # Ask for field outputs
 fout = FieldOutput(node_outputs=['U', 'RF'],
-                   element_outputs=['S', 'SF'])
+                   element_outputs=['S3D', 'SF'])
 stp.add_output(fout)
-
-# Set-up the problem
-prb = Problem('beam_shell')
-prb.add_step(stp)
-# prb.summary()
-mdl.add_problem(problem=prb)
 
 # Analyze and extracte results to SQLite database
 # mdl.analyse(problems=[prb], path=Path(TEMP).joinpath(prb.name), verbose=True)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 
-disp = NodeFieldResults(field_name='U', step=stp)
+disp = prb.displacement_field 
+react = prb.reaction_field
+stress = prb.stress_field
 # print(disp.max.value)
 # print(disp.min.value)
 
 
 # # Show Results
-# prb.show_nodes_field_contour('U', '2')
-# prb.show_nodes_field_vector('U', vector_sf=500)
-# prb.show_elements_field_vector('S', vector_sf=0.5)
-# prb.show_deformed(scale_factor=500, draw_bcs=0.2, drawLoads=0.2, original=1.)
-prb.show_deformed(scale_factor=100)
+# cmap = ColorMap.from_color(Color.red(), rangetype='light')
+cmap = ColorMap.from_mpl('viridis')
+
+# Show Results
+prb.show_nodes_field_contour(disp, component=3, draw_reactions=0.1, draw_loads=0.1, draw_bcs=0.1, cmap=cmap)
+prb.show_nodes_field_vector(disp, component=3, scale_factor=1000, draw_bcs=0.1,  draw_loads=0.1)
+prb.show_deformed(scale_factor=1000, draw_bcs=0.1, draw_loads=0.1)
+# prb.show_stress_contours(stress_type="von_mises_stress", side="top", draw_reactions=0.1, draw_loads=0.1, draw_bcs=0.1, cmap=cmap, bounds=[0, 0.5])
+prb.show_elements_field_vector(stress, vector_sf=10, draw_bcs=0.1)
 
