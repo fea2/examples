@@ -88,7 +88,7 @@ stp = StaticStep()
 prb.add_step(stp)
 
 # Add the loads
-stp.add_point_load(points=[poa], z=-(300*units.N).to_base_units().magnitude)
+stp.add_point_load_pattern(points=[poa], z=-(300*units.N).to_base_units().magnitude)
 stp.add_line_load(polyline, z=(-1*units.kN).to_base_units().magnitude)
 stp.add_planar_area_load(polygon, z=(-3*units.kN).to_base_units().magnitude)
 

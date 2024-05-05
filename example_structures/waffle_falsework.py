@@ -8,10 +8,11 @@ from compas_gmsh.models import MeshModel
 import compas_fea2
 from compas_fea2.model import Model, DeformablePart
 from compas_fea2.model import ElasticIsotropic, ShellSection
-from compas_fea2.problem import Problem, StaticStep, FieldOutput
+from compas_fea2.problem import Problem, StaticStep, FieldOutput, LoadCombination
 
 from compas_fea2.units import units
 units = units(system='SI_mm')
+compas_fea2.VERBOSE = True
 
 # chage this to the backend implementation of your choice
 # compas_fea2.set_backend('compas_fea2_abaqus')
@@ -23,19 +24,6 @@ DATA = os.sep.join(HERE.split(os.sep)[:-1]+['data'])
 TEMP = os.sep.join(HERE.split(os.sep)[:-1]+['temp'])
 
 mdl = Model(name='simple_waffle')
-
-# Get the waffle geometry
-mesh = Mesh.from_obj(os.path.join(DATA, 'simple_waffle', 'simple_waffle.obj'))
-S = Scale.from_factors([1000.] * 3)
-mesh.transform(S)
-
-# Use GMSH to discretize the geometry
-print('generating discretization...')
-model = MeshModel.from_mesh(mesh, targetlength=500)
-model.heal()
-model.generate_mesh(2)
-compas_mesh = model.mesh_to_compas()
-print("discretization complete!")
 
 # Define mechanical properties and panel thickness
 E = 10*units.GPa
@@ -50,41 +38,59 @@ mat = ElasticIsotropic(E=E.to_base_units().magnitude,
 sec = ShellSection(t=t.to_base_units().magnitude,
                    material=mat)
 
-# Define a deformable part using the mesh geometry and the mechanical properties
-prt = DeformablePart.shell_from_compas_mesh(mesh=compas_mesh, section=sec)
-# from_gmsh(gmshModel=model, section=sec)
-mdl.add_part(prt)
+settings = {       
+    'target_mesh_size': 1,
+    'mesh_size_at_vertices': None,
+    'target_point_mesh_size': None,
+    'meshsize_max': 100,
+    'meshsize_min': 100,
+    'rigid': False,
+    "material": mat,
+    "section": sec,
+}
+# # Define a deformable part using the mesh geometry and the mechanical properties
+# prt = DeformablePart.from_step_file(os.path.join(DATA, 'waffle_hilo_B.stp'), **settings)
+# # from_gmsh(gmshModel=model, section=sec)
+# mdl.add_part(prt)
 
-# fix the base
-bottom_plane = Plane([0, 0, 0], [0, 0, 1])
-fixed_nodes = prt.find_nodes_on_plane(bottom_plane)
-mdl.add_fix_bc(nodes=fixed_nodes)
-# mdl.show()
+# # fix the base
+# bottom_plane = Plane([0, 0, 0], [0, 0, 1])
+# fixed_nodes = prt.find_nodes_on_plane(bottom_plane)
+# mdl.add_fix_bc(nodes=fixed_nodes)
+# mdl.to_cfm(os.path.join(TEMP, 'waffle_hilo_B.cfm'))
+
+mdl = Model.from_cfm(os.path.join(TEMP, 'waffle_hilo_B.cfm'))
+prt = list(mdl.parts)[0]
+# mdl.show(draw_bcs=0.1)
 
 # DEFINE THE PROBLEM
-prb = Problem('point_loads', mdl)
-# define a Linear Elastic Static analysis
-step_1 = StaticStep()
-# Define the loads
-top_plane = Plane([0, 0, 1000], [0, 0, 1])
-loaded_nodes = prt.find_nodes_on_plane(top_plane)
-step_1.add_node_load(nodes=loaded_nodes,
-                      z=-(10*units.N).to_base_units().magnitude)
-# step_1.add_gravity_load(g=9810)
-# decide what information to save
+
+# Initialize a problem
+prb = mdl.add_problem(name='SLS')
+# Initialize a step
+stp = prb.add_static_step()
+# Create a load combination
+stp.combination = LoadCombination.SLS()
+# Add the loads
+stp.add_gravity_load_pattern([prt], g=9.81*units("m/s**2"), load_case="DL")
+
+# Ask for field outputs
 fout = FieldOutput(node_outputs=['U', 'RF'],
-                   element_outputs=['S'])
-step_1.add_output(fout)
+                   element_outputs=['S2D', 'SF'])
+stp.add_output(fout)
 
-# Add the step to the problem
-prb.add_step(step_1)
 prb.summary()
+# prb.show(draw_bcs=0.1, draw_loads=0.1)
 
-# Add the problem to the model
-mdl.add_problem(problem=prb)
-mdl.summary()
-
-# Run the analysis
-# mdl.analyse(problems=[prb], path=Path(TEMP).joinpath(prb.name), verbose=True)
+# Analyze and extracte results to SQLite database
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
-print(f'Analysis results saved in {prb.path}')
+disp = prb.displacement_field 
+react = prb.reaction_field
+stress = prb.stress_field
+
+results_summary = {
+    "Total volume ": mdl.volume,
+    "Total weight ": mdl.volume*78/10**6*9.81/10,
+    "Total vertical reaction": prb.get_total_reaction(stp)[0].z,
+    "Reactions check": True if abs(round(prb.get_total_reaction(stp)[0].z-mdl.volume*23.5/10**6*9.81/10,0)) < 10 else False,
+}
