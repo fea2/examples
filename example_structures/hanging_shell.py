@@ -65,6 +65,7 @@ mdl.add_pin_bc(nodes=fixed_nodes)
 # mdl.show()
 
 # DEFINE THE PROBLEM
+
 prb = mdl.add_problem(name='SLS')
 # define a Linear Elastic Static analysis
 step_1 = prb.add_static_step()

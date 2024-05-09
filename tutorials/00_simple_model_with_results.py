@@ -7,7 +7,7 @@ from compas.datastructures import Mesh
 import compas_fea2
 from compas_fea2.model import Model, DeformablePart, Node
 from compas_fea2.model import RectangularSection, ElasticIsotropic, ShellSection
-from compas_fea2.problem import Problem, StaticStep, FieldOutput
+from compas_fea2.problem import Problem, StaticStep, FieldOutput, LoadCombination
 
 from compas_fea2.units import units
 units = units(system='SI_mm')
@@ -18,6 +18,7 @@ compas_fea2.set_backend('compas_fea2_opensees')
 
 HERE = os.path.dirname(__file__)
 TEMP = os.sep.join(HERE.split(os.sep)[:-1]+['temp'])
+DATA = os.sep.join(HERE.split(os.sep)[:-1]+['data'])
 
 mdl = Model(name='simple_frame')
 
@@ -42,9 +43,11 @@ mdl.add_fix_bc(nodes=fixed_nodes)
 # DEFINE THE PROBLEM
 # define a step
 step_1 = StaticStep()
+step_1.combination = LoadCombination.ULS()
 pt = prt.find_node_by_key(random.choice(list(filter(lambda v: mesh.vertex_degree(v)!=2, mesh.vertices()))))
-step_1.add_node_load(nodes=[pt],
-                      z=-10*units.kN)
+step_1.add_node_pattern(nodes=[pt],
+                      z=-10*units.kN,
+                      load_case='LL')
 fout = FieldOutput(node_outputs=['U', 'RF'],
                    element_outputs=['SF'])
 step_1.add_output(fout)
@@ -58,3 +61,5 @@ prb.summary()
 mdl.add_problem(problem=prb)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 prb.show_deformed(scale_factor=1000, draw_loads=0.1, draw_bcs=0.25)
+
+mdl.to_cfm(DATA+'\simple_frame.cfm')

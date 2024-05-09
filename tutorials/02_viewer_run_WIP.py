@@ -16,7 +16,7 @@ from compas_view2.shapes import Arrow
 import compas_fea2
 from compas_fea2.model import Model, DeformablePart, Node
 from compas_fea2.model import RectangularSection, ElasticIsotropic, SolidSection
-from compas_fea2.problem import Problem, StaticStep, FieldOutput
+from compas_fea2.problem import Problem, StaticStep, FieldOutput, LoadCombination
 
 from compas_fea2.units import units
 units = units(system='SI_mm')
@@ -80,15 +80,16 @@ mdl.add_part(prt)
 # Set boundary conditions in the corners
 for vertex in mesh.vertices_where({'vertex_degree': 2}):
     location = mesh.vertex_coordinates(vertex)
-    mdl.add_fix_bc(nodes=prt.find_nodes_by_location(location, distance=150))
+    mdl.add_fix_bc(nodes=prt.find_nodes_around_point(location, distance=150))
 
 # Initialize a step
 stp = StaticStep()
-
+stp.combination = LoadCombination.SLS()
 # Add the load
 pt = prt.find_closest_nodes_to_point(poa_coordinates, distance=150)
-stp.add_node_load(nodes=pt,
-                    z=-10*units.kN)
+stp.add_node_pattern(nodes=pt,
+                    z=-10*units.kN,
+                    load_case='LL')
 
 # Ask for field outputs
 fout = FieldOutput(node_outputs=['U', 'RF'])
@@ -141,56 +142,56 @@ def click():
         # This function will be triggered under main thread when `signals.progress.emit()` sends out value from background threads.
 
         # Analyze and extracte results to SQLite database
-        mdl.analyse(problems=[prb], path=Path(TEMP).joinpath(prb.name), verbose=True)
+        mdl.analyse_and_extract(problems=[prb], path=Path(TEMP).joinpath(prb.name), verbose=True)
         # mdl.analyse_and_extract(problems=[prb], path=Path(TEMP).joinpath(prb.name), verbose=True)
 
-        # Serialize
-        prb.convert_results_to_sqlite(Path(TEMP).joinpath(prb.name, prb.name))
+        # # Serialize
+        # prb.convert_results_to_sqlite(Path(TEMP).joinpath(prb.name, prb.name))
         
         
-        c_symb = 'U3'
-        c_index = 2
+        # c_symb = 'U3'
+        # c_index = 2
 
-        displacements, _ = prb.get_displacements_sql()
-        max_disp = prb.get_max_displacement_sql(component=c_symb)
-        min_disp = prb.get_min_displacement_sql(component=c_symb)
+        # displacements, _ = prb.get_displacements_sql()
+        # max_disp = prb.get_max_displacement_sql(component=c_symb)
+        # min_disp = prb.get_min_displacement_sql(component=c_symb)
 
-        parts_gkey_vertex={}
-        parts_mesh={}
+        # parts_gkey_vertex={}
+        # parts_mesh={}
         
-        for part in prb.model.parts:
-            if (mesh:= part.discretized_boundary_mesh):
-                colored_mesh = mesh.copy()
-                parts_gkey_vertex[part.name] = colored_mesh.gkey_key(compas_fea2.PRECISION)
-                parts_mesh[part.name] = colored_mesh
+        # for part in prb.model.parts:
+        #     if (mesh:= part.discretized_boundary_mesh):
+        #         colored_mesh = mesh.copy()
+        #         parts_gkey_vertex[part.name] = colored_mesh.gkey_key(compas_fea2.PRECISION)
+        #         parts_mesh[part.name] = colored_mesh
 
-        pts = []
-        vectors = []
-        colors = []
+        # pts = []
+        # vectors = []
+        # colors = []
 
-        for displacement in displacements:
-            part = displacement['part']
-            node = displacement['node']
-            vector = displacement['vector']
+        # for displacement in displacements:
+        #     part = displacement['part']
+        #     node = displacement['node']
+        #     vector = displacement['vector']
             
-            cmap = ColorMap.from_palette('hawaii') #ColorMap.from_color(Color.red(), rangetype='light') #ColorMap.from_mpl('viridis')
-            color = cmap(vector[c_index], minval=min_disp['vector'][c_index], maxval=max_disp['vector'][c_index])
+        #     cmap = ColorMap.from_palette('hawaii') #ColorMap.from_color(Color.red(), rangetype='light') #ColorMap.from_mpl('viridis')
+        #     color = cmap(vector[c_index], minval=min_disp['vector'][c_index], maxval=max_disp['vector'][c_index])
 
-            pts.append(node.point)
-            vectors.append(vector)
-            colors.append(color)
+        #     pts.append(node.point)
+        #     vectors.append(vector)
+        #     colors.append(color)
 
-            if part.discretized_boundary_mesh:
-                if node.gkey in parts_gkey_vertex[part.name]:
-                    parts_mesh[part.name].vertex_attribute(parts_gkey_vertex[part.name][node.gkey], 'color', color)
+        #     if part.discretized_boundary_mesh:
+        #         if node.gkey in parts_gkey_vertex[part.name]:
+        #             parts_mesh[part.name].vertex_attribute(parts_gkey_vertex[part.name][node.gkey], 'color', color)
 
-        viewer.remove(obj)
-        for part in prb.model.parts:
-            if part.discretized_boundary_mesh:
-                viewer.add(parts_mesh[part.name], use_vertex_color=True)
+        # viewer.remove(obj)
+        # for part in prb.model.parts:
+        #     if part.discretized_boundary_mesh:
+        #         viewer.add(parts_mesh[part.name], use_vertex_color=True)
 
         
-        viewer.view.update()
+        # viewer.view.update()
 
     def on_result(result):
         # This function will be triggered once the background thread finishes.

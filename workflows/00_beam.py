@@ -38,19 +38,17 @@ mat = ElasticIsotropic(E=210*units.GPa,
 
 sec = RectangularSection(w=50*units.mm, h=100*units.mm, material=mat)
 
-# Convert the gmsh model in a compas_fea2 Part
-length = 5000
+length = 1000
 n = 10
 
 lines = [Line(Point(c*length/n, 0, 0), Point((c+1)*length/n, 0, 0)) for c in range(n)]
 prt= DeformablePart.from_compas_lines(lines, section=sec)
 mdl.add_part(prt)
 
-A = mdl.find_nodes_by_location(Point(0, 0, 0), distance=1)
-B = mdl.find_nodes_by_location(Point(length, 0, 0), distance=1)
+A = mdl.find_nodes_around_point(Point(0, 0, 0), distance=1)[0]
+B = mdl.find_nodes_around_point(Point(length, 0, 0), distance=1)[0]
 
 mdl.add_fix_bc(A)
-
 # mdl.summary()
 
 # PROBLEM
@@ -70,29 +68,21 @@ disp = prb.displacement_field
 react = prb.reaction_field
 stress = prb.stress_field
 
-# results_summary = {
-#     "Total volume : {mdl.volume*units('mm**3').to('m**3')}",
-#     "Total weight ": (mdl.volume*78/10**6*9.81/10/1000)*units('kN'),
-#     "Total vertical reaction": prb.get_total_reaction(stp)[0].y/1000*units('kN'),
-# }
 print(f"Total volume : {mdl.volume*units('mm**3').to('m**3'):P}")
 
-# print(prb.results_db.fields)
-# print(disp.get_results(members=pt, steps=stp))
-# print(disp.get_min_component(3, step=stp).vector)
-# print(disp.get_limits_component(3, step=stp))
-# print(disp.get_limits_absolute(step=stp))
-# # print(disp.all_results[0])
-# # print(disp.get_value_at_node(pt[0], stp))
-# # print(disp.max.magnitude)
-# # print(disp.min.magnitude)
+print(prb.results_db.fields)
+print("\nDisplacement vector with min component along 2:")
+print(disp.get_min_component(2, step=stp).vector)
+print("Displacement vector at B:")
+print(disp.get_results_at_point(B.point, 1, steps=[stp])[stp][0].vector)
 
-# cmap = ColorMap.from_color(Color.red(), rangetype='light')
-cmap = ColorMap.from_mpl('viridis')
+print("\nDisplacement vectors with max and min component along 2:")
+for r in disp.get_limits_component(2, step=stp):
+    print(r.vector)
+
+print("\nAbsolute max and min displacement vectors :")
+for r in disp.get_limits_absolute(step=stp):
+    print(r.vector)
 
 # Show Results
-prb.show_nodes_field_contour(disp, component=3, draw_reactions=0.1, draw_loads=0.1, draw_bcs=0.1, cmap=cmap)
-prb.show_nodes_field_vector(disp, component=3, scale_factor=1000, draw_bcs=0.1,  draw_loads=0.1)
-prb.show_deformed(scale_factor=1000, draw_bcs=0.1, draw_loads=0.1)
-prb.show_stress_contours(stress_type="von_mises_stress", side="top", draw_reactions=0.1, draw_loads=0.1, draw_bcs=0.1, cmap=cmap, bounds=[0, 0.5])
-prb.show_elements_field_vector(stress, vector_sf=10, draw_bcs=0.1)
+prb.show_deformed(scale_factor=100, draw_bcs=0.1, draw_loads=0.1)
