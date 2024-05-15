@@ -46,8 +46,8 @@ lines = [Line(Point(c*length/n, 0, 0), Point((c+1)*length/n, 0, 0)) for c in ran
 prt= DeformablePart.from_compas_lines(lines, section=sec)
 mdl.add_part(prt)
 
-A = mdl.find_nodes_by_location(Point(0, 0, 0), distance=1)
-B = mdl.find_nodes_by_location(Point(length, 0, 0), distance=1)
+A = mdl.find_nodes_around_point(Point(0, 0, 0), distance=1)
+B = mdl.find_nodes_around_point(Point(length, 0, 0), distance=1)
 
 mdl.add_fix_bc(A)
 
