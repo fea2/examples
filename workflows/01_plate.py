@@ -76,7 +76,7 @@ mdl.add_part(prt)
 # Set boundary conditions in the corners
 for vertex in plate.vertices_where({'vertex_degree': 2}):
     location = plate.vertex_coordinates(vertex)
-    mdl.add_pin_bc(nodes=prt.find_nodes_by_location(location, distance=10))
+    mdl.add_pin_bc(nodes=prt.find_nodes_around_point(location, distance=10))
 
 mdl.summary()
 mdl.show(draw_bcs=0.1)

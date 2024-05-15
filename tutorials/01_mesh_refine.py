@@ -12,7 +12,7 @@ from compas_view2.shapes import Arrow
 import compas_fea2
 from compas_fea2.model import Model, DeformablePart, Node
 from compas_fea2.model import RectangularSection, ElasticIsotropic, SolidSection
-from compas_fea2.problem import Problem, StaticStep, FieldOutput
+from compas_fea2.problem import Problem, StaticStep, FieldOutput, LoadCombination
 
 from compas_fea2.units import units
 units = units(system='SI_mm')
@@ -49,13 +49,13 @@ model = MeshModel.from_mesh(plate, targetlength=500)
 # refine mesh at the point of application of the load
 model.mesh_targetlength_at_vertex(poa, 100)
 
-# refine mesh at the supports
-for vertex in mesh.vertices_where({'vertex_degree': 2}):
-    a = geometric_key_xy(mesh.vertex_coordinates(vertex))
-    for vertex in plate.vertices():
-        b = geometric_key_xy(plate.vertex_coordinates(vertex))
-        if a == b:
-            model.mesh_targetlength_at_vertex(vertex, 10)
+# # refine mesh at the supports
+# for vertex in mesh.vertices_where({'vertex_degree': 2}):
+#     a = geometric_key_xy(mesh.vertex_coordinates(vertex))
+#     for vertex in plate.vertices():
+#         b = geometric_key_xy(plate.vertex_coordinates(vertex))
+#         if a == b:
+#             model.mesh_targetlength_at_vertex(vertex, 10)
 
 model.heal()
 model.refine_mesh()
@@ -125,7 +125,7 @@ mdl.add_part(prt)
 # Set boundary conditions in the corners
 for vertex in mesh.vertices_where({'vertex_degree': 2}):
     location = mesh.vertex_coordinates(vertex)
-    mdl.add_pin_bc(nodes=prt.find_nodes_by_location(location, distance=150))
+    mdl.add_pin_bc(nodes=prt.find_nodes_around_point(location, distance=150))
 
 # mdl.summary()
 
@@ -134,9 +134,10 @@ stp = StaticStep()
 
 # Add the load
 pt = prt.find_closest_nodes_to_point(poa_coordinates, distance=150)
-stp.add_node_load(nodes=pt,
-                      z=-10*units.kN)
-
+stp.add_node_pattern(nodes=pt,
+                      z=-10*units.kN,
+                      load_case="LL")
+stp.combination = LoadCombination.ULS()
 # Ask for field outputs
 fout = FieldOutput(node_outputs=['U', 'RF'],
                    element_outputs=['S', 'SF'])

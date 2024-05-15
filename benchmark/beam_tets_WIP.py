@@ -5,14 +5,15 @@ from compas.colors import ColorMap, Color
 
 import compas_fea2
 from compas_fea2.model import Model, DeformablePart
-from compas_fea2.model import ElasticIsotropic, ShellSection
+from compas_fea2.model import ElasticIsotropic, SolidSection
 from compas_fea2.problem import Problem, StaticStep, FieldOutput, LoadCombination
 from compas_fea2.results import DisplacementFieldResults
 
 from compas_fea2.units import units
 units = units(system='SI_mm')
 
-compas_fea2.set_backend('compas_fea2_opensees')
+compas_fea2.set_backend('compas_fea2_sofistik')
+# compas_fea2.set_backend('compas_fea2_opensees')
 
 HERE = os.path.dirname(__file__)
 TEMP = os.sep.join(HERE.split(os.sep)[:-1]+['temp'])
@@ -37,7 +38,7 @@ mdl = Model(name='plate')
 mat = ElasticIsotropic(E=210*units.GPa, 
                        v=0.2, 
                        density=7800*units("kg/m**3"))
-sec = ShellSection(material=mat, t=100)
+sec = SolidSection(material=mat)
 
 # Convert the gmsh model in a compas_fea2 Part
 prt = DeformablePart.shell_from_compas_mesh(mesh=plate, section=sec, name='beam', ndm=3, implementation="shelldkgq")
@@ -47,7 +48,7 @@ mdl.add_part(prt)
 for vertex in plate.vertices():
     location = plate.vertex_coordinates(vertex)
     if location[0] == 0:
-        mdl.add_fix_bc(nodes=prt.find_nodes_by_location(location, distance=1))
+        mdl.add_fix_bc(nodes=prt.find_nodes_around_point(location, distance=1))
 
 mdl.summary()
 # mdl.show(draw_bcs=0.1)
@@ -61,7 +62,7 @@ loaded_nodes=[]
 for vertex in plate.vertices():
     location = plate.vertex_coordinates(vertex)
     if location[0] == lx:
-        loaded_nodes.append(*prt.find_nodes_by_location(location, distance=1))
+        loaded_nodes.append(*prt.find_nodes_around_point(location, distance=1))
 stp.add_node_pattern(loaded_nodes, y=-1*units.kN, load_case='LL')
 
 

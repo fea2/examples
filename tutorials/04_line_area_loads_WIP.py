@@ -7,7 +7,7 @@ from compas_gmsh.models import MeshModel
 import compas_fea2
 from compas_fea2.model import Model, DeformablePart
 from compas_fea2.model import ElasticIsotropic, SolidSection
-from compas_fea2.problem import Problem, StaticStep, FieldOutput
+from compas_fea2.problem import Problem, StaticStep, FieldOutput, LoadCombination
 
 from compas_fea2.units import units
 units = units(system='SI_mm')
@@ -74,7 +74,7 @@ mdl.add_part(prt)
 # Set boundary conditions in the corners
 for vertex in mesh.vertices_where({'vertex_degree': 2}):
     location = mesh.vertex_coordinates(vertex)
-    mdl.add_fix_bc(nodes=prt.find_nodes_by_location(location, distance=150))
+    mdl.add_fix_bc(nodes=prt.find_nodes_around_point(location, distance=150))
 
 # mdl.summary()
 # mdl.show()
@@ -86,11 +86,11 @@ mdl.add_problem(problem=prb)
 # Initialize a step
 stp = StaticStep()
 prb.add_step(stp)
-
+stp.combination = LoadCombination.SLS()
 # Add the loads
-stp.add_point_load_pattern(points=[poa], z=-(300*units.N).to_base_units().magnitude)
-stp.add_line_load(polyline, z=(-1*units.kN).to_base_units().magnitude)
-stp.add_planar_area_load(polygon, z=(-3*units.kN).to_base_units().magnitude)
+stp.add_point_load_pattern(points=[poa], z=-300*units.N)
+stp.add_line_load(polyline, z=-1*units.kN)
+stp.add_planar_area_load(polygon, z=-3*units.kN)
 
 # Ask for field outputs
 stp.add_output(FieldOutput(node_outputs=['U']))
