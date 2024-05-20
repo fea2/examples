@@ -56,7 +56,7 @@ B1 = mdl.find_nodes_around_point(Point(length, 0, 0), distance=1)
 B2 = mdl.find_nodes_around_point(Point(length, 0, 1000), distance=1)
 
 spring = SpringConnector(nodes=B1+B2)
-mdl.add_connectors(connector=spring, nodes=B1+B2)
+mdl.add_connector(connector=spring, nodes=B1+B2)
 # prt.add_element(SpringElement(B1+B2, section=None))
 
 mdl.add_fix_bc(A1+A2)
