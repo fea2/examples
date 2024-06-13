@@ -27,15 +27,16 @@ ly = 10_000
 nx = 10
 ny = 10
 mesh = Mesh.from_meshgrid(lx, nx, ly, ny)
-
+mesh.quads_to_triangles()
 
 mat = ElasticIsotropic(E=210*units.GPa, 
                        v=0.2, 
                        density=7800*units("kg/m**3"))
 sec = RectangularSection(w=100, h=200, material=mat)
-prt = DeformablePart.frame_from_compas_mesh(mesh, sec)
-
+#prt = DeformablePart.frame_from_compas_mesh(mesh, sec)
+prt = DeformablePart.shell_from_compas_mesh(mesh, sec)
 mdl.add_part(prt)
+
 
 fixed_nodes = [prt.find_node_by_key(vertex) for vertex in list(filter(lambda v: mesh.vertex_degree(v)==2, mesh.vertices()))]
 mdl.add_fix_bc(nodes=fixed_nodes)
