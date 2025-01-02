@@ -116,7 +116,7 @@ print(f'Analysis results saved in {prb.path}')
 disp = prb.displacement_field 
 react = prb.reaction_field
 stress = prb.stress_field
-print(react.get_max_component(3, stp).magnitude)
+print(react.get_max_result(3, stp).magnitude)
 # print(disp.min.value)
 
 

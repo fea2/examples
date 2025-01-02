@@ -79,7 +79,7 @@ mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 disp = prb.displacement_field 
 react = prb.reaction_field
 stress = prb.stress_field
-print(react.get_max_component(2, stp).magnitude)
+print(react.get_max_result(2, stp).magnitude)
 
 # Show Results
 # prb.show_principal_stress_vectors(stp, scale_results=0.5, show_bcs=0.05)

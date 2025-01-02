@@ -19,7 +19,7 @@ units = units(system='SI_mm')
 compas_fea2.set_backend('compas_fea2_opensees')
 
 HERE = os.path.dirname(__file__)
-TEMP = os.sep.join(HERE.split(os.sep)[:-1]+['temp'])
+TEMP = os.sep.join(HERE.split(os.sep)[:-2]+['temp'])
 
 
 # ==============================================================================

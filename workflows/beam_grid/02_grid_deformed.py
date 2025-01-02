@@ -1,6 +1,6 @@
 import os
 
-from random import choice
+from random import choice, choices, uniform
 from compas.datastructures import Mesh
 from compas_gmsh.models import MeshModel
 from compas.colors import ColorMap, Color
@@ -37,9 +37,13 @@ plate = Mesh.from_meshgrid(lx, nx, ly, ny)
 # Select random internal vertex for load application
 # ==============================================================================
 
-poa = choice(list(set(plate.vertices()) - set(plate.vertices_on_boundary())))
+inner_vertices = list(set(plate.vertices()) - set(plate.vertices_on_boundary()))
+
+poa = choice(inner_vertices)
 poa_coordinates = plate.vertex_coordinates(poa)
 
+for v in inner_vertices:
+    plate.vertex_attribute(v, "z", (uniform(-0.5, 0.5) * units.m).to_base_units().magnitude)
 
 # ==============================================================================
 # COMPAS_FEA2

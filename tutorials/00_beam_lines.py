@@ -23,10 +23,10 @@ TEMP = os.sep.join(HERE.split(os.sep)[:-1]+['temp'])
 # ==============================================================================
 # Make a plate mesh
 # ==============================================================================
-lx = (1*units.m).to_base_units().magnitude
+lx = (3*units.m).to_base_units().magnitude
 ly = (20*units.cm).to_base_units().magnitude
 nx = 10
-ny = 3
+ny = 1
 plate = Mesh.from_meshgrid(lx, nx, ly, ny)
 
 # ==============================================================================
@@ -41,7 +41,7 @@ mat = ElasticIsotropic(E=210*units.GPa,
                        density=7800*units("kg/m**3"))
 # sec = BeamSection.from_shape(Rectangle(w=2*units.cm, h=1*units.cm,), material=mat)
 # sec = RectangularSection(w=2*units.cm, h=1*units.cm, material=mat)
-sec = ISection(w=10, h=50, tw=2, tf=2, material=mat)
+sec = ISection(w=50, h=100, tw=2, tf=2, material=mat)
 
 # Convert the gmsh model in a compas_fea2 Part
 prt = DeformablePart.frame_from_compas_mesh(mesh=plate, section=sec, name='beam')
@@ -66,7 +66,7 @@ for vertex in plate.vertices():
     location = plate.vertex_coordinates(vertex)
     if location[0] == lx:
         loaded_nodes.append(*prt.find_nodes_around_point(location, distance=1))
-stp.add_node_pattern(nodes=loaded_nodes, y=-1*units.kN, load_case='LL')
+stp.add_node_pattern(nodes=loaded_nodes, z=-1*units.kN, load_case='LL')
 
 
 # Ask for field outputs
@@ -74,13 +74,14 @@ fout = FieldOutput(node_outputs=['U', 'RF'],
                    element_outputs=['S', 'SF'])
 stp.add_output(fout)
 
-prb.show(draw_loads=0.1, show_bcs=0.1)
+# prb.show(draw_loads=0.1, show_bcs=0.1)
 
 # Analyze and extracte results to SQLite database
 mdl.analyse_and_extract(problems=[prb], path=os.path.join(TEMP, prb.name), verbose=True)
 disp = prb.displacement_field 
 react = prb.reaction_field
 stress = prb.stress_field
-print(react.get_max_component(2, stp).magnitude)
+print(react.get_max_result(2, stp).magnitude)
+print(disp.get_min_result(2, stp).magnitude)
 
-prb.show_deformed(scale_factor=1000)
+prb.show_deformed(scale_results=10, show_nodes=True, show_bcs=0.1)

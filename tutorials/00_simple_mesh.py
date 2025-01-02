@@ -12,9 +12,7 @@ from compas_fea2.problem import Problem, StaticStep, FieldOutput, LoadCombinatio
 from compas_fea2.units import units
 units = units(system='SI_mm')
 
-# compas_fea2.set_backend('compas_fea2_sofistik')
 compas_fea2.set_backend('compas_fea2_opensees')
-# compas_fea2.set_backend('abaqus')
 
 HERE = os.path.dirname(__file__)
 TEMP = os.sep.join(HERE.split(os.sep)[:-1]+['temp'])
@@ -49,7 +47,7 @@ stp.add_node_pattern(nodes=[pt],
                       z=-10*units.kN,
                       load_case='LL')
 fout = FieldOutput(node_outputs=['U', 'RF'],
-                   element_outputs=['SF'])
+                   element_outputs=['SF', 'S'])
 stp.add_output(fout)
 
 # set-up the problem
@@ -59,6 +57,7 @@ prb.summary()
 
 mdl.add_problem(problem=prb)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
-prb.show_displacements_contour(stp, scale_results=10, component=None, show_bcs=0.5)
+# prb.show_displacements_contour(stp, scale_results=10, component=None, show_bcs=0.5)
+prb.show_stress_contour(stp, scale_results=1e-6, component=None, show_bcs=0.5)
 
 mdl.to_cfm(os.path.join(DATA, 'simple_frame.cfm'))
