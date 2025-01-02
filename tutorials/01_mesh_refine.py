@@ -4,10 +4,7 @@ from pathlib import Path
 from random import choice
 from compas.datastructures import Mesh
 from compas.geometry import Point, Vector
-from compas.utilities import geometric_key_xy
 from compas_gmsh.models import MeshModel
-from compas_view2.app import App
-from compas_view2.shapes import Arrow
 
 import compas_fea2
 from compas_fea2.model import Model, DeformablePart, Node
@@ -73,37 +70,6 @@ print('Min length: ', min(lengths))
 print('Max length: ', max(lengths))
 
 # ==============================================================================
-# Viz
-# ==============================================================================
-
-viewer = App(width=1600, height=900)
-
-viewer.view.camera.rz = 0
-viewer.view.camera.rx = -55
-viewer.view.camera.tx = -5
-viewer.view.camera.ty = -2
-viewer.view.camera.distance = 10
-
-viewer.view.camera.target = [5000, 5000, 100]
-viewer.view.camera.position = [5000, 0, 5000]
-viewer.view.camera.near = 1
-viewer.view.camera.far = 100000
-viewer.view.camera.scale = 1000
-viewer.view.grid.cell_size = 1000
-
-viewer.add(solid_mesh)
-
-poa = Point(* plate.vertex_coordinates(poa))
-start = poa + Vector(0, 0, 1000)
-vector = Vector(0, 0, -1000)
-load = Arrow(start, vector, body_width=0.02)
-
-viewer.add(poa, pointsize=5)
-viewer.add(load, facecolor=(1, 0, 0))
-
-viewer.run()
-
-# ==============================================================================
 # COMPAS_FEA2
 # ==============================================================================
 
@@ -153,5 +119,4 @@ mdl.add_problem(problem=prb)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 
 # Show Results
-# prb.show_displacements_contour(draw_loads=0.1, draw_bcs=400)
-prb.show_deformed(scale_factor=5000, draw_loads=0.1, draw_bcs=0.3)
+prb.show_displacements_contour(draw_loads=0.1, draw_bcs=400)

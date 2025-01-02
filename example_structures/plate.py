@@ -121,7 +121,6 @@ print(react.get_max_component(3, stp).magnitude)
 
 
 # Show Results
-cmap = ColorMap.from_mpl('viridis')
-prb.show_nodes_field_contour(disp, component=3, draw_reactions=0.01, draw_loads=0.01, draw_bcs=1, cmap=cmap)
+prb.show_displacements_contour(stp, scale_results=10, component=None, show_bcs=0.5)
 
 

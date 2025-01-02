@@ -12,7 +12,7 @@ from compas_fea2.problem import Problem, StaticStep, FieldOutput, LoadCombinatio
 
 from compas_fea2.units import units
 units = units(system='SI_mm')
-compas_fea2.VERBOSE = True
+compas_fea2.VERBOSE = False
 
 # chage this to the backend implementation of your choice
 # compas_fea2.set_backend('compas_fea2_abaqus')
@@ -48,16 +48,16 @@ settings = {
     "material": mat,
     "section": sec,
 }
-# # Define a deformable part using the mesh geometry and the mechanical properties
-# prt = DeformablePart.from_step_file(os.path.join(DATA, 'waffle_hilo_B.stp'), **settings)
-# # from_gmsh(gmshModel=model, section=sec)
-# mdl.add_part(prt)
+# Define a deformable part using the mesh geometry and the mechanical properties
+prt = DeformablePart.from_step_file(os.path.join(DATA, 'waffle_hilo_B.stp'), **settings)
+# from_gmsh(gmshModel=model, section=sec)
+mdl.add_part(prt)
 
-# # fix the base
-# bottom_plane = Plane([0, 0, 0], [0, 0, 1])
-# fixed_nodes = prt.find_nodes_on_plane(bottom_plane)
-# mdl.add_fix_bc(nodes=fixed_nodes)
-# mdl.to_cfm(os.path.join(TEMP, 'waffle_hilo_B.cfm'))
+# fix the base
+bottom_plane = Plane([0, 0, 0], [0, 0, 1])
+fixed_nodes = prt.find_nodes_on_plane(bottom_plane)
+mdl.add_fix_bc(nodes=fixed_nodes)
+mdl.to_cfm(os.path.join(TEMP, 'waffle_hilo_B.cfm'))
 
 mdl = Model.from_cfm(os.path.join(TEMP, 'waffle_hilo_B.cfm'))
 prt = list(mdl.parts)[0]

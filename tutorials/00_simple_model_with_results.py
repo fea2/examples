@@ -42,24 +42,23 @@ mdl.add_fix_bc(nodes=fixed_nodes)
 
 # DEFINE THE PROBLEM
 # define a step
-step_1 = StaticStep()
-step_1.combination = LoadCombination.ULS()
+stp = StaticStep()
+stp.combination = LoadCombination.ULS()
 pt = prt.find_node_by_key(random.choice(list(filter(lambda v: mesh.vertex_degree(v)!=2, mesh.vertices()))))
-step_1.add_node_pattern(nodes=[pt],
+stp.add_node_pattern(nodes=[pt],
                       z=-10*units.kN,
                       load_case='LL')
 fout = FieldOutput(node_outputs=['U', 'RF'],
                    element_outputs=['SF'])
-step_1.add_output(fout)
-# hout = HistoryOutput('hout_test')
+stp.add_output(fout)
 
 # set-up the problem
 prb = Problem('00_simple_problem', mdl)
-prb.add_step(step_1)
+prb.add_step(stp)
 prb.summary()
 
 mdl.add_problem(problem=prb)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
-prb.show_deformed(scale_factor=1000, draw_loads=0.1, draw_bcs=0.25)
+prb.show_displacements_contour(stp, scale_results=10, component=None, show_bcs=0.5)
 
-mdl.to_cfm(DATA+'\simple_frame.cfm')
+mdl.to_cfm(os.path.join(DATA, 'simple_frame.cfm'))

@@ -1,7 +1,7 @@
 import os
 
 from compas.datastructures import Mesh
-from compas.utilities import geometric_key_xy
+# from compas.utilities import geometric_key_xy
 from compas_gmsh.models import MeshModel
 
 import compas_fea2
@@ -82,5 +82,8 @@ stress = prb.stress_field
 print(react.get_max_component(2, stp).magnitude)
 
 # Show Results
-prb.show_elements_field_vector(stress, vector_sf=1, draw_bcs=0.05, draw_loads=0.1)
-prb.show_deformed(scale_factor=500, draw_bcs=0.05, draw_loads=0.1, opacity=0.8, original=0.25)
+# prb.show_principal_stress_vectors(stp, scale_results=0.5, show_bcs=0.05)
+# prb.show_deformed(scale_results=100, show_bcs=0.05, show_loads=0.1, opacity=0.8, original=0.25)
+# prb.show_displacements_contour(stp, scale_results=0.5, show_bcs=0.05, component=0)
+# prb.show_stress_contour(stp, scale_results=0.5, show_bcs=0.05)
+prb.show_reactions(stp, scale_results=0.05, show_bcs=0.05)
