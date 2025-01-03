@@ -2,8 +2,8 @@ import os
 from compas.colors import ColorMap, Color
 
 import compas_fea2
-from compas_fea2.model import Model, DeformablePart
-from compas_fea2.model import ElasticIsotropic, SolidSection
+from compas_fea2.model import Model, DeformablePart, ZeroLengthSpringConnector
+from compas_fea2.model import ElasticIsotropic, SolidSection #ElasticSpring
 from compas_fea2.problem import FieldOutput, LoadCombination
 
 from compas_fea2.units import units
@@ -55,14 +55,27 @@ mdl.add_part(box_top)
 restrained_nodes = list(filter(lambda n: n.z == 0 and (n.x == 0 or n.x==1000), box_bottom.nodes))
 mdl.add_pin_bc(nodes=restrained_nodes)
 
+# Ensure connected nodes are coincident
+connector_nodes_bottom = box_bottom.find_nodes_on_plane(box_bottom.top_plane)
+connector_nodes_top = box_top.find_nodes_on_plane(box_top.bottom_plane)
+for node_bottom, node_top in zip(connector_nodes_bottom, connector_nodes_top):
+    node_top.xyz = node_bottom.xyz
+
+# Add connectors between the two parts
+for node_bottom, node_top in zip(connector_nodes_bottom, connector_nodes_top):
+    # Specify the directions for the connector
+    directions = [0, 1, 2]  # X, Y, Z directions
+    connector = ZeroLengthSpringConnector(nodes=[node_bottom, node_top], section=sec, directions=directions)
+    mdl.add_connector(connector)
+
 prb = mdl.add_problem(name='SLS')
 stp = prb.add_static_step()
 stp.combination = LoadCombination.SLS()
 
 # Add the load
-loaded_nodes = box_top.find_nodes_on_plane(box_top.top_plane) #list(filter(lambda n: n.z == 1000, prt.nodes))
+loaded_nodes = box_bottom.find_nodes_on_plane(box_bottom.top_plane) #list(filter(lambda n: n.z == 1000, prt.nodes))
 stp.add_node_pattern(nodes=loaded_nodes,
-                    z=-(1/len(loaded_nodes))*units.MN,
+                    x=-(1/len(loaded_nodes))*units.MN,
                     load_case="DL")
 
 # Ask for field outputs
@@ -72,19 +85,18 @@ stp.add_output(fout)
 
 mdl.add_problem(problem=prb)
 mdl.summary()
-prb.show(draw_bcs=0.1, draw_loads=1)
+# prb.show(draw_bcs=0.1, draw_loads=1)
 
 # Analyze and extracte results to SQLite database
-mdl.analyse(problems=[prb], path=TEMP, verbose=True)
+mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 disp = prb.displacement_field 
 react = prb.reaction_field
 stress = prb.stress_field
 
 
 # Show Results
-cmap = ColorMap.from_mpl('viridis')
-prb.show_nodes_field_contour(disp, component=3, draw_reactions=0.01, draw_loads=0.01, draw_bcs=0.1, cmap=cmap)
-# prb.show_nodes_field_vector(disp, component=3, scale_factor=1000, draw_bcs=0.01,  draw_loads=0.01)
-# prb.show_deformed(scale_factor=1000, draw_bcs=0.01, draw_loads=0.01)
-# prb.show_stress_contours(stress_type="von_mises_stress", draw_reactions=0.01, draw_loads=0.01, draw_bcs=0.1, cmap=cmap, bounds=[0, 0.5])
-# prb.show_elements_field_vector(stress, vector_sf=100, draw_bcs=0.1)
+prb.show_principal_stress_vectors(stp, scale_results=10, show_bcs=0.05)
+# prb.show_deformed(scale_results=100, show_bcs=0.05, show_loads=0.1, opacity=0.8, original=0.25)
+# prb.show_displacements_contour(stp, scale_results=0.5, show_bcs=0.05, component=0)
+# prb.show_stress_contour(stp, scale_results=0.5, show_bcs=0.05)
+# prb.show_reactions(stp, scale_results=0.05, show_bcs=0.05)

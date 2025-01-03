@@ -1,4 +1,5 @@
 import os
+from math import pi
 
 from compas.datastructures import Mesh
 
@@ -23,6 +24,7 @@ ly = (30*units.cm).to_base_units().magnitude
 nx = 20
 ny = 6
 plate = Mesh.from_meshgrid(lx, nx, ly, ny)
+plate = plate.rotated(pi/2, [1, 0, 0])
 
 # ==============================================================================
 # COMPAS_FEA2
@@ -37,14 +39,14 @@ mat = ElasticIsotropic(E=210*units.GPa,
 sec = ShellSection(material=mat, t=30*units.mm)
 
 # Convert the gmsh model in a compas_fea2 Part
-prt = DeformablePart.shell_from_compas_mesh(mesh=plate, section=sec, name='beam', ndm=3, implementation="ShellMIT4")
+prt = DeformablePart.shell_from_compas_mesh(mesh=plate, section=sec, name='beam')
 mdl.add_part(prt)
 
 # Set boundary conditions in the corners
 for vertex in plate.vertices():
     location = plate.vertex_coordinates(vertex)
     if location[0] == 0:
-        mdl.add_fix_bc(nodes=prt.find_nodes_around_point(location, distance=1))
+        mdl.add_pin_bc(nodes=prt.find_nodes_around_point(location, distance=1))
 
 mdl.summary()
 
@@ -55,7 +57,7 @@ stp.combination = LoadCombination.SLS()
 # Add the load
 loaded_nodes = list(filter(lambda n: n.x == lx, prt.nodes))
 stp.add_node_pattern(nodes=loaded_nodes,
-                  y=-(2/len(loaded_nodes))*units.kN,
+                  z=-(2/len(loaded_nodes))*units.kN,
                   load_case="LL")
 
 # Ask for field outputs
@@ -73,8 +75,8 @@ stress = prb.stress_field
 print(react.get_max_result(2, stp).magnitude)
 
 # Show Results
-# prb.show_principal_stress_vectors(stp, scale_results=0.5, show_bcs=0.05)
+prb.show_principal_stress_vectors(stp, scale_results=0.5, show_bcs=0.05)
 # prb.show_deformed(scale_results=100, show_bcs=0.05, show_loads=0.1, opacity=0.8, original=0.25)
 # prb.show_displacements_contour(stp, scale_results=0.5, show_bcs=0.05, component=0)
 # prb.show_stress_contour(stp, scale_results=0.5, show_bcs=0.05)
-prb.show_reactions(stp, scale_results=0.05, show_bcs=0.05)
+# prb.show_reactions(stp, scale_results=0.05, show_bcs=0.05)

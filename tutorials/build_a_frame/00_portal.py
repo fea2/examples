@@ -10,8 +10,7 @@ compas_fea2.set_backend('compas_fea2_opensees')
 compas_fea2.POINT_OVERLAP = False
 
 HERE = os.path.dirname(__file__)
-TEMP = os.sep.join(HERE.split(os.sep)[:-1]+['temp'])
-DATA = os.sep.join(HERE.split(os.sep)[:-1]+['data'])
+TEMP = os.path.join(HERE, '..', '..', 'temp')
 
 # === Step 1: Define the Units System ===
 # Define the unit system to be used (SI with millimeters)
