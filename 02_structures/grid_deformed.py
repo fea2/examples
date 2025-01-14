@@ -1,16 +1,13 @@
 import os
 
-from random import choice, choices, uniform
+from random import choice, uniform
 from compas.datastructures import Mesh
-from compas_gmsh.models import MeshModel
-from compas.colors import ColorMap, Color
-from compas.geometry import Point, Line
 
 import compas_fea2
 from compas_fea2.model import Model, DeformablePart
 from compas_fea2.model import ElasticIsotropic, ISection
-from compas_fea2.problem import Problem, StaticStep, FieldOutput, LoadCombination
-from compas_fea2.results import DisplacementFieldResults
+from compas_fea2.problem import LoadCombination
+from compas_fea2.problem import DisplacementFieldOutput, ReactionFieldOutput
 
 
 from compas_fea2.units import units
@@ -43,7 +40,9 @@ poa = choice(inner_vertices)
 poa_coordinates = plate.vertex_coordinates(poa)
 
 for v in inner_vertices:
-    plate.vertex_attribute(v, "z", (uniform(-0.5, 0.5) * units.m).to_base_units().magnitude)
+    plate.vertex_attribute(
+        v, "z", (uniform(-0.5, 0.5) * units.m).to_base_units().magnitude
+    )
 
 # ==============================================================================
 # COMPAS_FEA2
@@ -75,16 +74,15 @@ stp = prb.add_static_step()
 # Create a load combination
 stp.combination = LoadCombination.SLS()
 # Add the loads
-pt = prt.find_closest_nodes_to_point(poa_coordinates, distance=10)
+pt = prt.find_closest_nodes_to_point(poa_coordinates, 1)[0]
 stp.add_node_pattern(nodes=pt, z=-1 * units.kN, load_case="LL")
-stp.add_node_pattern(
-    nodes=pt, z=-(10 * units.kN).to_base_units().magnitude, load_case="DL"
-)
-stp.add_gravity_load_pattern([prt], g=9.81 * units("m/s**2"), load_case="DL")
+# stp.add_node_pattern(
+#     nodes=pt, z=-(10 * units.kN).to_base_units().magnitude, load_case="DL"
+# )
+# stp.add_gravity_load_pattern([prt], g=9.81 * units("m/s**2"), load_case="DL")
 
 # Ask for field outputs
-fout = FieldOutput(node_outputs=["U", "RF"], element_outputs=["S2D", "SF"])
-stp.add_output(fout)
+stp.add_outputs((DisplacementFieldOutput(), ReactionFieldOutput()))
 
 prb.summary()
 # prb.show(show_bcs=1, draw_loads=0.1, opacity=1)
@@ -96,23 +94,23 @@ react = prb.reaction_field
 stress = prb.stress_field
 
 results_summary = {
-    "Total volume ": mdl.volume,
-    "Total weight ": mdl.volume * 78 / 10**6 * 9.81 / 10,
+    "Total load": 1000.0,
     "Total vertical reaction": prb.get_total_reaction(stp)[0].z,
     "Reactions check": (
         True
         if abs(
             round(
                 prb.get_total_reaction(stp)[0].z
-                - mdl.volume * 23.5 / 10**6 * 9.81 / 10,
+                - 1000.0,
                 0,
             )
         )
-        < 10
+        == 0
         else False
     ),
 }
 
+print(results_summary)
 
 # Show Results
-prb.show_displacements_contour(stp, scale_results=0.5, component=None, show_bcs=0.5)
+prb.show_displacements(stp, scale_results=0.5, component=None, show_bcs=0.5)

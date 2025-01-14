@@ -16,17 +16,18 @@ Steps:
 # Import necessary classes from compas_fea2 for creating the model, materials, and elements
 import os
 import gmsh
-from compas.geometry import Point, Line, Plane
+from compas.geometry import Plane
 
 import compas_fea2
 from compas_fea2.model import Model, DeformablePart, Node, BeamElement
 from compas_fea2.model import ElasticIsotropic, RectangularSection
-from compas_fea2.problem import Problem, StaticStep, FieldOutput, LoadCombination
+from compas_fea2.problem import Problem, StaticStep, DisplacementFieldOutput, LoadCombination
 from compas_fea2.units import units
-compas_fea2.set_backend('compas_fea2_opensees')
+
+compas_fea2.set_backend("compas_fea2_opensees")
 
 HERE = os.path.dirname(__file__)
-TEMP = os.path.join(HERE, '..', '..', 'temp')
+TEMP = os.path.join(HERE, "..", "..", "temp")
 
 # === Step 1: Define the Units System ===
 # Define the unit system to be used (SI with millimeters)
@@ -39,9 +40,9 @@ compas_fea2.POINT_OVERLAP = False
 lx = 6000  # Length in X direction
 ly = 4000  # Length in Y direction
 lz = 3200  # Length in Z direction
-nx = 2     # Number of divisions in X direction
-ny = 3     # Number of divisions in Y direction
-nz = 7     # Number of divisions in Z direction
+nx = 2  # Number of divisions in X direction
+ny = 3  # Number of divisions in Y direction
+nz = 7  # Number of divisions in Z direction
 
 # Define the target length for mesh discretization
 target_length = 500
@@ -56,9 +57,9 @@ prt = DeformablePart(name="my_part")
 # === Step 4: Define Material Properties ===
 # Define an elastic isotropic material (e.g., concrete or steel)
 mat = ElasticIsotropic(
-    E=30 * units("GPa"),       # Young's modulus (30 GPa)
-    v=0.2,                     # Poisson's ratio (dimensionless)
-    density=2400 * units("kg/m**3")  # Density (2400 kg/m³)
+    E=30 * units("GPa"),  # Young's modulus (30 GPa)
+    v=0.2,  # Poisson's ratio (dimensionless)
+    density=2400 * units("kg/m**3"),  # Density (2400 kg/m³)
 )
 
 # === Step 5: Define Cross-Sections ===
@@ -89,15 +90,30 @@ lines = []
 for i in range(nx + 1):
     for j in range(ny + 1):
         for k in range(nz):
-            lines.append(gmsh.model.geo.addLine(points[i * (ny + 1) * (nz + 1) + j * (nz + 1) + k], points[i * (ny + 1) * (nz + 1) + j * (nz + 1) + k + 1]))
+            lines.append(
+                gmsh.model.geo.addLine(
+                    points[i * (ny + 1) * (nz + 1) + j * (nz + 1) + k],
+                    points[i * (ny + 1) * (nz + 1) + j * (nz + 1) + k + 1],
+                )
+            )
 for i in range(nx + 1):
     for j in range(ny):
         for k in range(nz + 1):
-            lines.append(gmsh.model.geo.addLine(points[i * (ny + 1) * (nz + 1) + j * (nz + 1) + k], points[i * (ny + 1) * (nz + 1) + (j + 1) * (nz + 1) + k]))
+            lines.append(
+                gmsh.model.geo.addLine(
+                    points[i * (ny + 1) * (nz + 1) + j * (nz + 1) + k],
+                    points[i * (ny + 1) * (nz + 1) + (j + 1) * (nz + 1) + k],
+                )
+            )
 for i in range(nx):
     for j in range(ny + 1):
         for k in range(nz + 1):
-            lines.append(gmsh.model.geo.addLine(points[i * (ny + 1) * (nz + 1) + j * (nz + 1) + k], points[(i + 1) * (ny + 1) * (nz + 1) + j * (nz + 1) + k]))
+            lines.append(
+                gmsh.model.geo.addLine(
+                    points[i * (ny + 1) * (nz + 1) + j * (nz + 1) + k],
+                    points[(i + 1) * (ny + 1) * (nz + 1) + j * (nz + 1) + k],
+                )
+            )
 
 # Synchronize GMSH model
 gmsh.model.geo.synchronize()
@@ -113,7 +129,9 @@ element_tags, element_nodes = gmsh.model.mesh.getElementsByType(1)
 # Create nodes and elements for the deformable part
 nodes = []
 for i in range(len(node_tags)):
-    nodes.append(Node([node_coords[3 * i], node_coords[3 * i + 1], node_coords[3 * i + 2]]))
+    nodes.append(
+        Node([node_coords[3 * i], node_coords[3 * i + 1], node_coords[3 * i + 2]])
+    )
 
 elements = []
 for i in range(len(element_tags)):
@@ -134,7 +152,11 @@ for element in elements:
     else:
         sec = sec_column
         frame = [0, 1, 0]
-    prt.add_element(BeamElement(nodes=(nodes[element[0]], nodes[element[1]]), section=sec, frame=frame))
+    prt.add_element(
+        BeamElement(
+            nodes=(nodes[element[0]], nodes[element[1]]), section=sec, frame=frame
+        )
+    )
 
 # Finalize GMSH
 gmsh.finalize()
@@ -151,14 +173,19 @@ stp = StaticStep()
 stp.combination = LoadCombination.ULS()
 
 # Add a load at the top-left corner of the structure
-stp.add_node_pattern(nodes=prt.find_nodes_on_plane(Plane([0,0,nz*lz], [0,0,1])), x=1 * units.kN, y=1 * units.kN, load_case='LL')
+stp.add_node_pattern(
+    nodes=prt.find_nodes_on_plane(Plane([0, 0, nz * lz], [0, 0, 1])),
+    x=1 * units.kN,
+    y=1 * units.kN,
+    load_case="LL",
+)
 
 # Define field outputs
-fout = FieldOutput(node_outputs=['U', 'RF'], element_outputs=['SF'])
+fout = DisplacementFieldOutput()
 stp.add_output(fout)
 
 # Set up the problem
-prb = Problem('3d_frame_Fx', mdl)
+prb = Problem("3d_frame_Fx")
 prb.add_step(stp)
 
 # Add the problem to the model
@@ -169,14 +196,14 @@ mdl.add_problem(problem=prb)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 
 # Get displacement and reaction fields
-disp = prb.displacement_field 
+disp = prb.displacement_field
 react = prb.reaction_field
 
-# Print reaction results
-print("Max reaction force in X direction [N]: ", react.get_min_result(1, stp).magnitude)
-print("Max reaction force in Y direction [N]: ", react.get_min_result(2, stp).magnitude)
-print("Max reaction force in Z direction [N]: ", react.get_max_result(3, stp).magnitude)
+# # Print reaction results
+# print("Max reaction force in X direction [N]: ", react.get_min_result(1, stp).magnitude)
+# print("Max reaction force in Y direction [N]: ", react.get_min_result(2, stp).magnitude)
+# print("Max reaction force in Z direction [N]: ", react.get_max_result(3, stp).magnitude)
 
 # Show reactions
-prb.show_displacements_contour(stp, show_bcs=0.5)
-# prb.show_deformed(stp, scale_results=10, show_bcs=0.5)
+# prb.show_displacements(stp, fast=True, show_bcs=0.5, show_loads=1, show_vectors=False)
+prb.show_deformed(stp, scale_results=10, show_bcs=0.5)
