@@ -23,7 +23,7 @@ units = units(system="SI_mm")
 compas_fea2.set_backend("compas_fea2_opensees")
 
 HERE = os.path.dirname(__file__)
-DATA = os.path.join(HERE, "..", "data")
+DATA = os.path.join(HERE, "..", "00_data")
 TEMP = os.path.join(HERE, "..", "temp")
 
 mdl = Model(name="shell")
@@ -81,8 +81,9 @@ mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 prb.show_mode_shape(
     step=stp_modal,
     mode=1,
-    scale_results=10,
+    scale_results=100,
+    show_original=0.3,
     show_bcs=0.2,
-    show_vectors=20,
-    show_contour=True,
+    show_vectors=100,
+    # show_contour=True,
 )

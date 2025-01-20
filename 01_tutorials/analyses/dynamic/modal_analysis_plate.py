@@ -28,7 +28,7 @@ units = units(system="SI_mm")
 compas_fea2.set_backend("compas_fea2_opensees")
 
 HERE = os.path.dirname(__file__)
-TEMP = os.path.join(HERE, "..", "..", "00_temp")
+TEMP = os.path.join(HERE, "..", "..", "..", "temp")
 
 # ==============================================================================
 # Step 1: Define the plate geometry
@@ -81,6 +81,7 @@ stp = prb.add_step(ModalAnalysis(modes=6))
 # Step 5: Run the analysis and visualize the mode shapes
 # ==============================================================================
 mdl.analyse_and_extract(problems=[prb], path=os.path.join(TEMP, prb.name), verbose=True)
+print(stp.mode_result(1))
 prb.show_mode_shape(
     step=stp, mode=2, scale_results=1000, show_bcs=0.2, show_vectors=1000
 )

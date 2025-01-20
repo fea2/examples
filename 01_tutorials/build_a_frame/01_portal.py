@@ -7,6 +7,7 @@ from compas_fea2.problem import (
     Problem,
     StaticStep,
     DisplacementFieldOutput,
+    SectionForcesFieldOutput,
     LoadCombination,
 )
 from compas_fea2.units import units
@@ -91,13 +92,14 @@ mdl.summary()
 mdl.add_pin_bc(nodes=[n1, n4])
 
 # DEFINE THE PROBLEM
-prb = mdl.add_problem(problem=Problem("simple_portal_Fx"))
+prb = mdl.add_problem(problem=Problem(name="simple_portal_Fx"))
 # define a step
 stp = prb.add_step(StaticStep())
 stp.combination = LoadCombination.ULS()
 # Add a node pattern to apply a load on node n2
 stp.add_node_pattern(nodes=[n2], x=1 * units.kN, load_case="LL")
-stp.add_output(DisplacementFieldOutput())
+stp.add_outputs((SectionForcesFieldOutput(),    DisplacementFieldOutput()))
 
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
-prb.show_deformed(scale_results=1000, show_original=0.1, show_bcs=0.1)
+# prb.show_deformed(scale_results=1000, show_original=0.1, show_bcs=0.1)
+beam.plot_stress_distribution(stp)

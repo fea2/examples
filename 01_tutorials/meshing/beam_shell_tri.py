@@ -22,7 +22,7 @@ units = units(system="SI_mm")
 compas_fea2.set_backend("compas_fea2_opensees")
 
 HERE = os.path.dirname(__file__)
-TEMP = os.sep.join(HERE.split(os.sep)[:-1] + ["temp"])
+TEMP = os.sep.join(HERE.split(os.sep)[:-2] + ["temp"])
 
 
 # ==============================================================================
@@ -84,8 +84,8 @@ mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 # print(react.get_max_result(2, stp).magnitude)
 
 # Show Results
-prb.show_reactions(stp, show_vectors=0.1, show_bcs=0.05, show_contours=0.5)
+# prb.show_reactions(stp, show_vectors=0.1, show_bcs=0.05, show_contours=0.5)
 # prb.show_deformed(scale_results=1000, show_bcs=0.05, show_loads=0.1, show_original=0.25)
-# prb.show_displacements(show_vectors=1000, show_bcs=0.05, show_loads=0.1, show_contours=0.2)
+# prb.show_displacements(show_vectors=1000, show_bcs=0.05, show_loads=0.1, show_contour=0.2)
 # prb.show_principal_stress_vectors(stp, scale_results=0.5, show_bcs=0.05, show_loads=0.1)
-# prb.show_stress_contour(stp, scale_results=0.5, show_bcs=0.05)
+prb.show_stress(stp, show_bcs=0.05, show_vectors=100)

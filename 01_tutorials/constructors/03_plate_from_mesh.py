@@ -21,7 +21,12 @@ from compas_gmsh.models import MeshModel
 import compas_fea2
 from compas_fea2.model import Model, DeformablePart
 from compas_fea2.model import ElasticIsotropic, SolidSection
-from compas_fea2.problem import LoadCombination, DisplacementFieldOutput
+from compas_fea2.problem import (
+    LoadCombination,
+    DisplacementFieldOutput,
+    ReactionFieldOutput,
+    Stress2DFieldOutput,
+)
 
 from compas_fea2.units import units
 
@@ -70,7 +75,8 @@ mdl.add_part(prt)
 for vertex in plate.vertices():
     location = plate.vertex_coordinates(vertex)
     if location[0] == 0 or location[0] == lx:
-        mdl.add_fix_bc(nodes=prt.find_nodes_around_point(location, distance=1))
+        if location[2] < 0:
+            mdl.add_pin_bc(nodes=prt.find_nodes_around_point(location, distance=1))
 
 # Print model summary
 mdl.summary()
@@ -87,12 +93,18 @@ loaded_nodes = []
 for vertex in plate.vertices():
     location = plate.vertex_coordinates(vertex)
     if location[0] == lx / 2:
-        loaded_nodes.extend(prt.find_nodes_around_point(location, distance=1))
+        if location[2] > 0:
+            loaded_nodes.extend(prt.find_nodes_around_point(location, distance=1))
 stp.add_node_pattern(nodes=loaded_nodes, z=-10 * units.kN, load_case="LL")
 
 # Define field outputs
-fout = DisplacementFieldOutput()
-stp.add_output(fout)
+stp.add_outputs(
+    (
+        DisplacementFieldOutput(),
+        ReactionFieldOutput(),
+        Stress2DFieldOutput(),
+    )
+)
 
 # ==============================================================================
 # Run the analysis and show results
@@ -109,4 +121,10 @@ mdl.analyse_and_extract(problems=[prb], path=os.path.join(TEMP, prb.name), verbo
 # print("Min displacement [mm]: ", disp.get_min_component(3, stp))
 
 # Show deformed shape
-prb.show_deformed(scale_results=100, show_nodes=True, show_bcs=0.1)
+# prb.show_reactions(
+#     stp, show_vectors=0.01, show_bcs=0.1, show_contour=0.5, show_loads=0.01
+# )
+# prb.show_deformed(scale_results=100, show_nodes=True, show_bcs=0.1, show_loads=0.01)
+# prb.show_displacements(show_vectors=100, show_bcs=0.1, show_loads=0.01, show_contour=True)
+prb.show_principal_stress_vectors(stp, scale_results=0.5, show_bcs=0.05, show_loads=0.1)
+# prb.show_stress_contour(stp, scale_results=0.5, show_bcs=0.05)

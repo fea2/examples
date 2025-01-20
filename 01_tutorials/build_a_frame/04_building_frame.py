@@ -21,7 +21,13 @@ from compas.geometry import Plane
 import compas_fea2
 from compas_fea2.model import Model, DeformablePart, Node, BeamElement
 from compas_fea2.model import ElasticIsotropic, RectangularSection
-from compas_fea2.problem import Problem, StaticStep, DisplacementFieldOutput, LoadCombination
+from compas_fea2.problem import (
+    Problem,
+    StaticStep,
+    DisplacementFieldOutput,
+    LoadCombination,
+    ReactionFieldOutput,
+)
 from compas_fea2.units import units
 
 compas_fea2.set_backend("compas_fea2_opensees")
@@ -175,14 +181,15 @@ stp.combination = LoadCombination.ULS()
 # Add a load at the top-left corner of the structure
 stp.add_node_pattern(
     nodes=prt.find_nodes_on_plane(Plane([0, 0, nz * lz], [0, 0, 1])),
-    x=1 * units.kN,
-    y=1 * units.kN,
+    # x=1 * units.kN,
+    # y=1 * units.kN,
+    z=-1 * units.kN,
     load_case="LL",
 )
 
 # Define field outputs
-fout = DisplacementFieldOutput()
-stp.add_output(fout)
+fout = [DisplacementFieldOutput(), ReactionFieldOutput()]
+stp.add_outputs(fout)
 
 # Set up the problem
 prb = Problem("3d_frame_Fx")
@@ -196,8 +203,8 @@ mdl.add_problem(problem=prb)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 
 # Get displacement and reaction fields
-disp = prb.displacement_field
-react = prb.reaction_field
+disp = stp.displacement_field
+react = stp.reaction_field
 
 # # Print reaction results
 # print("Max reaction force in X direction [N]: ", react.get_min_result(1, stp).magnitude)
@@ -206,4 +213,5 @@ react = prb.reaction_field
 
 # Show reactions
 # prb.show_displacements(stp, fast=True, show_bcs=0.5, show_loads=1, show_vectors=False)
-prb.show_deformed(stp, scale_results=10, show_bcs=0.5)
+# prb.show_deformed(stp, scale_results=10, show_bcs=0.5)
+prb.show_reactions(stp, show_vectors=0.05, show_bcs=0.05, show_contours=0.5)
