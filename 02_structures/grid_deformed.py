@@ -4,7 +4,7 @@ from random import choice, uniform
 from compas.datastructures import Mesh
 
 import compas_fea2
-from compas_fea2.model import Model, DeformablePart
+from compas_fea2.model import Model, Part
 from compas_fea2.model import ElasticIsotropic, ISection
 from compas_fea2.problem import LoadCombination
 from compas_fea2.problem import DisplacementFieldOutput, ReactionFieldOutput
@@ -56,7 +56,7 @@ sec = ISection(
     w=25 * units.cm, h=250 * units.mm, tw=20 * units.mm, tf=4 * units.cm, material=mat
 )
 
-prt = DeformablePart.frame_from_compas_mesh(plate, section=sec)
+prt = Part.frame_from_compas_mesh(plate, section=sec)
 mdl.add_part(prt)
 
 
@@ -100,8 +100,7 @@ results_summary = {
         True
         if abs(
             round(
-                prb.get_total_reaction(stp)[0].z
-                - 1000.0,
+                prb.get_total_reaction(stp)[0].z - 1000.0,
                 0,
             )
         )

@@ -1,21 +1,25 @@
 import os
 from math import pi
 from compas.datastructures import Mesh
+from random import choice
 
 # from compas.utilities import geometric_key_xy
 from compas_gmsh.models import MeshModel
 
 import compas_fea2
-from compas_fea2.model import Model, DeformablePart
+from compas_fea2.model import Model, Part
 from compas_fea2.model import ElasticIsotropic, ShellSection
-from compas_fea2.problem import (
-    LoadCombination,
-    DisplacementFieldOutput,
-    ReactionFieldOutput,
-    Stress2DFieldOutput,
+from compas_fea2.problem import LoadCombination
+
+from compas_fea2.results import (
+    StressFieldResults,
+    DisplacementFieldResults,
+    ReactionFieldResults,
 )
 
 from compas_fea2.units import units
+
+from compas_fea2_vedo.viewer import ModelViewer
 
 units = units(system="SI_mm")
 
@@ -49,7 +53,7 @@ mat = ElasticIsotropic(E=210 * units.GPa, v=0.2, density=7800 * units("kg/m**3")
 sec = ShellSection(material=mat, t=30 * units.mm)
 
 # Convert the gmsh model in a compas_fea2 Part
-prt = DeformablePart.from_gmsh(gmshModel=model, section=sec, name="beam")
+prt = Part.from_gmsh(gmshModel=model, section=sec, name="beam")
 prt._discretized_boundary_mesh = model.mesh_to_compas()
 prt._boundary_mesh = plate
 prt.bounding_box
@@ -62,6 +66,8 @@ for node in prt.nodes:
 
 mdl.summary()
 # mdl.show(draw_bcs=0.1)
+# viewer = ModelViewer(mdl)
+# viewer.show()
 
 prb = mdl.add_problem(name="SLS")
 stp = prb.add_static_step(system="SparseGeneral")
@@ -74,18 +80,17 @@ stp.add_node_pattern(
 )
 
 # Ask for field outputs
-stp.add_output(DisplacementFieldOutput())
-stp.add_output(ReactionFieldOutput())
-stp.add_output(Stress2DFieldOutput())
+stp.add_outputs([DisplacementFieldResults, StressFieldResults])
 # prb.summary()
 
 # Analyze and extracte results to SQLite database
-mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
+mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True, erase_data=True)
 # print(react.get_max_result(2, stp).magnitude)
 
 # Show Results
-# prb.show_reactions(stp, show_vectors=0.1, show_bcs=0.05, show_contours=0.5)
-# prb.show_deformed(scale_results=1000, show_bcs=0.05, show_loads=0.1, show_original=0.25)
-# prb.show_displacements(show_vectors=1000, show_bcs=0.05, show_loads=0.1, show_contour=0.2)
-# prb.show_principal_stress_vectors(stp, scale_results=0.5, show_bcs=0.05, show_loads=0.1)
-prb.show_stress(stp, show_bcs=0.05, show_vectors=100)
+viewer = ModelViewer(mdl)
+viewer.add_node_field_results(
+    stp.displacement_field, draw_vectors=100000, draw_cmap="viridis"
+)
+# viewer.add_principal_stress_vectors(stp.stress_field, 1)
+viewer.show()

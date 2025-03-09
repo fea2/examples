@@ -18,9 +18,11 @@ import os
 from compas.geometry import Line
 
 import compas_fea2
-from compas_fea2.model import Model, DeformablePart
+from compas_fea2.model import Model, Part
 from compas_fea2.model import ElasticIsotropic, ISection
-from compas_fea2.problem import LoadCombination, DisplacementFieldOutput
+from compas_fea2.problem import LoadCombination
+from compas_fea2.results import DisplacementFieldResults
+from compas_fea2_vedo.viewer import ModelViewer
 
 from compas_fea2.units import units
 
@@ -49,14 +51,14 @@ mdl = Model(name="beam_line")
 mat = ElasticIsotropic(E=210 * units.GPa, v=0.2, density=7800 * units("kg/m**3"))
 
 # Define the beam section
-sec = ISection(w=100, h=190, tw=2, tf=2, material=mat)
+sec = ISection.HEA160(mat)
 
 # Create a deformable part from the lines
-prt = DeformablePart.from_compas_lines(lines, section=sec, name="beam")
+prt = Part.from_compas_lines(lines, section=sec, name="beam")
 mdl.add_part(prt)
 
 # Set boundary conditions at the start of the beam
-mdl.add_fix_bc(nodes=prt.find_closest_nodes_to_point([0, 0, 0], 1))
+mdl.add_fix_bc(nodes=prt.nodes.subgroup(condition=lambda node: node.x == 0))
 
 # Print model summary
 mdl.summary()
@@ -70,32 +72,33 @@ stp.combination = LoadCombination.SLS()
 
 # Add a load at the end of the beam
 stp.add_node_pattern(
-    nodes=prt.find_closest_nodes_to_point([(n - 1) * length, 0, 0], 1),
+    nodes=prt.nodes.subgroup(condition=lambda node: node.x == (n - 1) * length),
     z=-1 * units.kN,
     load_case="LL",
 )
 
 # Define field outputs
-fout = DisplacementFieldOutput()
-stp.add_output(fout)
-
+stp.add_output(DisplacementFieldResults)
+mdl.show()
 # ==============================================================================
 # Run the analysis and show results
 # ==============================================================================
 # Analyze and extract results to SQLite database
-mdl.analyse_and_extract(problems=[prb], path=os.path.join(TEMP, prb.name), verbose=True)
+mdl.analyse_and_extract(
+    problems=[prb], path=os.path.join(TEMP, prb.name), erase_data=True
+)
 
-# # Get displacement and reaction fields
-# disp = prb.displacement_field
+# Get displacement and reaction fields
+disp = stp.displacement_field
 
-# # Print displacement results
-# print("Displacement vector with min z component: ", disp.get_min_result(3, stp).vector)
-# print(
-#     "Min z component of the displacement field [mm]: ", disp.get_min_component(3, stp)
-# )
+
+# Print displacement results
+print("Displacement vector with min z component: ", disp.get_min_result("z").vector)
+print("Resultant displacement: ", disp.compute_resultant())
 
 # Show deformed shape
-prb.show_displacements(
-    stp, show_bcs=0.1, component=2, show_vectors=10, show_contours=False, show_loads=0.2
+viewer = ModelViewer(mdl)
+viewer.add_node_field_results(
+    stp.displacement_field, draw_cmap="viridis", draw_vectors=100
 )
-# prb.show_deformed(scale_results=10, show_original=0.1, show_bcs=0.1)
+viewer.show()

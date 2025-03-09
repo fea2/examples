@@ -4,15 +4,14 @@ import gmsh
 from compas.geometry import Plane
 
 import compas_fea2
-from compas_fea2.model import Model, DeformablePart, Node, BeamElement
+from compas_fea2.model import Model, Part, Node, BeamElement
 from compas_fea2.model import ElasticIsotropic, RectangularSection
 from compas_fea2.problem import (
     Problem,
     StaticStep,
     LoadCombination,
-    DisplacementFieldOutput,
-    SectionForcesFieldOutput,
 )
+from compas_fea2.results import DisplacementFieldResults, SectionForcesFieldResults
 from compas_fea2.units import units
 
 compas_fea2.set_backend("compas_fea2_opensees")
@@ -31,7 +30,7 @@ compas_fea2.POINT_OVERLAP = False
 mdl = Model(name="discretized_portal")
 
 # Create a deformable part that will contain nodes and elements
-prt = DeformablePart(name="portal")
+prt = Part(name="portal")
 
 # === Step 3: Define Material Properties ===
 # Define an elastic isotropic material (e.g., concrete or steel)
@@ -125,7 +124,7 @@ stp.add_node_pattern(
 )
 
 # Define field outputs
-stp.add_outputs((DisplacementFieldOutput(), SectionForcesFieldOutput()))
+stp.add_outputs((DisplacementFieldResults, SectionForcesFieldResults))
 
 # === Step 8: Run the Analysis and Show Results ===
 # Analyze and extract results to SQLite database
@@ -137,7 +136,7 @@ mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 # print("Max reaction force in Z direction [N]: ", react.get_max_result(3, stp).magnitude)
 
 # Show reactions
-# prb.show_displacements(stp, component=0, show_bcs=0.5, show_loads=1)
-prb.show_deformed(scale_results=1000, show_original=0.1, show_bcs=0.1)
-# prb.show_reactions(stp, scale_results=2, show_bcs=0.5)
+# stp.show_displacements(stp, component=0, show_bcs=0.5, show_loads=1)
+stp.show_deformed(scale_results=1000, show_original=0.1, show_bcs=0.1)
+# stp.show_reactions(stp, scale_results=2, show_bcs=0.5)
 print(list(prt.elements)[0].forces(stp))

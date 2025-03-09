@@ -19,14 +19,17 @@ import gmsh
 from compas.geometry import Plane
 
 import compas_fea2
-from compas_fea2.model import Model, DeformablePart, Node, BeamElement
+from compas_fea2.model import Model, Part, Node, BeamElement
 from compas_fea2.model import ElasticIsotropic, RectangularSection
 from compas_fea2.problem import (
     Problem,
     StaticStep,
-    DisplacementFieldOutput,
     LoadCombination,
-    ReactionFieldOutput,
+)
+from compas_fea2.results import (
+    DisplacementFieldResults,
+    SectionForcesFieldResults,
+    ReactionFieldResults,
 )
 from compas_fea2.units import units
 
@@ -58,7 +61,7 @@ target_length = 500
 mdl = Model(name="3d_frame")
 
 # Create a deformable part that will contain nodes and elements
-prt = DeformablePart(name="my_part")
+prt = Part(name="my_part")
 
 # === Step 4: Define Material Properties ===
 # Define an elastic isotropic material (e.g., concrete or steel)
@@ -188,7 +191,7 @@ stp.add_node_pattern(
 )
 
 # Define field outputs
-fout = [DisplacementFieldOutput(), ReactionFieldOutput()]
+fout = [DisplacementFieldResults, SectionForcesFieldResults, ReactionFieldResults]
 stp.add_outputs(fout)
 
 # Set up the problem
@@ -212,6 +215,6 @@ react = stp.reaction_field
 # print("Max reaction force in Z direction [N]: ", react.get_max_result(3, stp).magnitude)
 
 # Show reactions
-# prb.show_displacements(stp, fast=True, show_bcs=0.5, show_loads=1, show_vectors=False)
-# prb.show_deformed(stp, scale_results=10, show_bcs=0.5)
-prb.show_reactions(stp, show_vectors=0.05, show_bcs=0.05, show_contours=0.5)
+# stp.show_displacements(stp, fast=True, show_bcs=0.5, show_loads=1, show_vectors=False)
+# stp.show_deformed(stp, scale_results=10, show_bcs=0.5)
+stp.show_reactions(stp, show_vectors=0.05, show_bcs=0.05, show_contours=0.5)

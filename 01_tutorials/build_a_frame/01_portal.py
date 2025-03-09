@@ -1,15 +1,14 @@
 # Import necessary classes from compas_fea2 for creating the model, materials, and elements
 import os
 import compas_fea2
-from compas_fea2.model import Model, DeformablePart, Node
+from compas_fea2.model import Model, Part, Node
 from compas_fea2.model import ElasticIsotropic, BeamElement, RectangularSection
 from compas_fea2.problem import (
     Problem,
     StaticStep,
-    DisplacementFieldOutput,
-    SectionForcesFieldOutput,
     LoadCombination,
 )
+from compas_fea2.results import DisplacementFieldResults, SectionForcesFieldResults
 from compas_fea2.units import units
 
 compas_fea2.set_backend("compas_fea2_opensees")
@@ -28,7 +27,7 @@ units = units(system="SI_mm")  # SI units with length in millimeters
 mdl = Model(name="portal")
 
 # Create a deformable part that will contain nodes and elements
-prt = DeformablePart(name="my_part")
+prt = Part(name="my_part")
 
 # === Step 3: Define Material Properties ===
 # Define an elastic isotropic material (e.g., concrete or steel)
@@ -98,8 +97,8 @@ stp = prb.add_step(StaticStep())
 stp.combination = LoadCombination.ULS()
 # Add a node pattern to apply a load on node n2
 stp.add_node_pattern(nodes=[n2], x=1 * units.kN, load_case="LL")
-stp.add_outputs((SectionForcesFieldOutput(),    DisplacementFieldOutput()))
+stp.add_outputs((SectionForcesFieldResults, DisplacementFieldResults))
 
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
-# prb.show_deformed(scale_results=1000, show_original=0.1, show_bcs=0.1)
+stp.show_deformed(scale_results=1000, show_original=0.1, show_bcs=0.1)
 beam.plot_stress_distribution(stp)

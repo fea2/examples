@@ -26,6 +26,7 @@ from compas_fea2.problem import (
 )
 from compas_fea2.results import DisplacementFieldResults
 from compas_fea2_vedo.viewer import ModelViewer
+
 from compas_fea2.units import units
 
 units = units(system="SI_mm")
@@ -45,13 +46,12 @@ ly = (1 * units.m).to_base_units().magnitude
 nx = 10
 ny = 3
 plate = Mesh.from_meshgrid(lx, nx, ly, ny)
-thk = (10 * units.mm).to_base_units().magnitude
-plate = plate.thickened(thk)
+plate = plate.thickened((1 * units.cm).to_base_units().magnitude)
 
 # ==============================================================================
 # GMSH model
 # ==============================================================================
-model = MeshModel.from_mesh(plate, targetlength=100)
+model = MeshModel.from_mesh(plate, targetlength=500)
 solid_mesh = model.mesh_to_compas()
 
 # ==============================================================================
@@ -67,41 +67,10 @@ mat = ElasticIsotropic(E=210 * units.GPa, v=0.2, density=7800 * units("kg/m**3")
 sec = SolidSection(material=mat)
 
 # Create a deformable part from the mesh
-prt = Part.from_gmsh(gmshModel=model, section=sec)
+prt = Part.from_step_file(
+    "/Users/francesco/code/fea2/examples/00_data/solids/box.stp",
+    section=sec,
+    meshsize_max=100,
+)
 mdl.add_part(prt)
-
-# Set boundary conditions at both ends of the plate
-fixed_nodes = prt.nodes.subgroup(condition=lambda node: node.x == 0 or node.x == lx)
-mdl.add_fix_bc(nodes=fixed_nodes)
-
-# Print model summary
-mdl.summary()
-
-# ==============================================================================
-# Define the problem
-# ==============================================================================
-prb = mdl.add_problem(name="mid_load")
-stp = prb.add_static_step()
-stp.combination = LoadCombination.SLS()
-
-# Add a load in the middle of the grid
-loaded_nodes = prt.nodes.subgroup(condition=lambda node: node.x == lx / 2)
-stp.add_node_pattern(
-    nodes=loaded_nodes, z=-1 * units.kN / len(loaded_nodes), load_case="LL"
-)
-
-# Define field outputs
-stp.add_output(DisplacementFieldResults)
-
-# ==============================================================================
-# Run the analysis and show results
-# ==============================================================================
-# Analyze and extract results to SQLite database
-mdl.analyse_and_extract(problems=[prb], path=os.path.join(TEMP, prb.name), verbose=True)
-
-# Show deformed shape
-viewer = ModelViewer(mdl)
-viewer.add_node_field_results(
-    stp.displacement_field, draw_cmap="viridis", draw_vectors=100
-)
-viewer.show()
+mdl.show()

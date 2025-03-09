@@ -2,21 +2,22 @@ import os
 import gmsh
 from compas.geometry import Plane, cross_vectors, normalize_vector
 import compas_fea2
-from compas_fea2.model import Model, DeformablePart, Node, BeamElement, ShellElement
+from compas_fea2.model import Model, Part, Node, BeamElement, ShellElement
 from compas_fea2.model import ElasticIsotropic, ShellSection, ISection, Steel
 from compas_fea2.problem import (
     Problem,
     StaticStep,
     LoadCombination,
-    DisplacementFieldOutput,
-    Stress2DFieldOutput,
 )
+
+from compas_fea2.results import DisplacementFieldResults, StressFieldResults
 from compas_fea2.units import units
 
 # --------------------------------------------------------------------------
 # 1. Initialize COMPAS FEA2 and Units
 # --------------------------------------------------------------------------
-compas_fea2.set_backend("compas_fea2_opensees")
+# compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_calculix")
 units = units(system="SI_mm")
 compas_fea2.POINT_OVERLAP = False
 
@@ -27,7 +28,7 @@ TEMP = os.path.join(HERE, "..", "..", "temp")
 # 2. Create Model and Deformable Part
 # --------------------------------------------------------------------------
 mdl = Model(name="table_with_shell")
-prt = DeformablePart(name="table_part")
+prt = Part(name="table_part")
 mdl.add_part(prt)
 # --------------------------------------------------------------------------
 # 3. Define Material and Sections
@@ -157,15 +158,13 @@ stp.add_node_pattern(
 )
 
 # Add output fields
-stp.add_outputs((DisplacementFieldOutput(), Stress2DFieldOutput()))
-
+stp.add_outputs([DisplacementFieldResults, StressFieldResults])
 # --------------------------------------------------------------------------
 # 8. Run Analysis and Show Results
 # --------------------------------------------------------------------------
-mdl.add_part(prt)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
-
-prb.show_stress(stp, show_bcs=0.05, show_vectors=1e2, plane="bottom")
+mdl.show()
+# stp.show_stress(stp, show_bcs=0.05, show_vectors=1e2, plane="bottom")
 
 # prb.show_deformed(scale_results=1000, show_original=0.2, show_bcs=0.3, show_loads=10)
 # prb.show_displacements(stp, show_bcs=0.3, show_loads=10, show_contour=True, show_vectors=100)

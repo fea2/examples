@@ -6,14 +6,11 @@ from compas.geometry import Scale, Plane
 from compas_gmsh.models import MeshModel
 
 import compas_fea2
-from compas_fea2.model import Model, DeformablePart
+from compas_fea2.model import Model, Part
 from compas_fea2.model import ShellSection, ElasticIsotropic
 from compas_fea2.problem import LoadCombination, ModalAnalysis
-from compas_fea2.problem import (
-    DisplacementFieldOutput,
-    ReactionFieldOutput,
-    Stress2DFieldOutput,
-)
+from compas_fea2.results import DisplacementFieldResults
+from compas_fea2_vedo.viewer import ModelViewer
 
 from compas_fea2.units import units
 
@@ -51,7 +48,7 @@ mat = ElasticIsotropic(E=E, v=v, density=rho)
 sec = ShellSection(t=t, material=mat)
 
 # Define a deformable part using the mesh geometry and the mechanical properties
-prt = DeformablePart.shell_from_compas_mesh(mesh=compas_mesh, section=sec)
+prt = Part.shell_from_compas_mesh(mesh=compas_mesh, section=sec)
 mdl.add_part(prt)
 
 # Fix the base
@@ -67,23 +64,27 @@ stp.add_node_pattern(nodes=prt.nodes, load_case="LL", x=0, y=0, z=-1 * units.kN)
 # stp.add_gravity_load_pattern(parts=prt, g=9.81 * units("m/s**2"), z=-1., load_case="DL")
 
 # Decide what information to save
-stp.add_outputs(
-    [DisplacementFieldOutput(), ReactionFieldOutput(), Stress2DFieldOutput()]
-)
+stp.add_outputs([DisplacementFieldResults])
 
-stp_modal = ModalAnalysis(modes=3)
-prb.add_step(stp_modal)
+# stp_modal = ModalAnalysis(modes=3)
+# prb.add_step(stp_modal)
 
 
 # Run the analysis and show results
-mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
-# prb.show_displacements(step=stp, fast=True, show_vectors=0.5)
-prb.show_mode_shape(
-    step=stp_modal,
-    mode=1,
-    scale_results=100,
-    show_original=0.3,
-    show_bcs=0.2,
-    show_vectors=100,
-    # show_contour=True,
+mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True, erase_data=True)
+# # stp.show_displacements(step=stp, fast=True, show_vectors=0.5)
+# stp_modal.show_mode_shape(
+#     step=stp_modal,
+#     mode=1,
+#     scale_results=100,
+#     show_original=0.3,
+#     show_bcs=0.2,
+#     show_vectors=100,
+#     # show_contour=True,
+# )
+
+viewer = ModelViewer(mdl)
+viewer.add_node_field_results(
+    stp.displacement_field, draw_cmap="viridis", draw_isolines=True
 )
+viewer.show()

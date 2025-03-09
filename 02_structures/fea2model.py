@@ -5,14 +5,15 @@ import os
 from compas.geometry import Plane
 
 import compas_fea2
-from compas_fea2.model import Model, DeformablePart, Node
+from compas_fea2.model import Model, Part, Node
 from compas_fea2.model import CircularSection, ElasticIsotropic, BeamElement
 from compas_fea2.problem import (
     Problem,
     StaticStep,
-    DisplacementFieldOutput,
     LoadCombination,
 )
+from compas_fea2.results import DisplacementFieldResults
+from compas_fea2_vedo.viewer import ModelViewer
 
 from compas_fea2.units import units
 
@@ -23,7 +24,7 @@ HERE = os.path.dirname(__file__)
 TEMP = os.sep.join(HERE.split(os.sep)[:-1] + ["temp"])
 
 mdl = Model(name="ILOVEFEA2")
-prt = DeformablePart(name="my_part")
+prt = Part(name="my_part")
 
 mat = ElasticIsotropic(E=210 * units("GPa"), v=0.2, density=7800 * units("kg/m**3"))
 
@@ -71,7 +72,7 @@ mdl.add_fix_bc(nodes=fixed_nodes)
 stp = StaticStep()
 stp.combination = LoadCombination.ULS()
 stp.add_node_pattern(nodes=prt.nodes, y=1 * units.kN, load_case="LL")
-stp.add_output(DisplacementFieldOutput())
+stp.add_output(DisplacementFieldResults)
 
 # set-up the problem
 prb = Problem(name="fea2model")
@@ -80,4 +81,8 @@ prb.add_step(stp)
 mdl.add_problem(problem=prb)
 
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
-prb.show_displacements(show_bcs=0.5, show_nodes=0.5, show_contours=0.3)
+viewer = ModelViewer(mdl)
+viewer.add_node_field_results(
+    stp.displacement_field, draw_cmap="viridis", draw_vectors=10000
+)
+viewer.show()

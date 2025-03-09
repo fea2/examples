@@ -8,10 +8,11 @@ from compas_fea2.problem import (
     StaticStep,
     LoadCombination,
 )
-from compas_fea2.results import DisplacementFieldResults, SectionForcesFieldResults
+from compas_fea2.results import DisplacementFieldResults, SectionForcesFieldResults, StressFieldResults
 from compas_fea2.units import units
 
-compas_fea2.set_backend("compas_fea2_opensees")
+# compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_calculix")
 
 compas_fea2.POINT_OVERLAP = False
 
@@ -39,8 +40,10 @@ mat = ElasticIsotropic(
 
 # === Step 4: Create Nodes (Geometric Points) ===
 # Define the nodes of the structure with their spatial coordinates
-n1 = Node(xyz=[0, 0, 0])  # Bottom-left corner of the structure
-n2 = Node(xyz=[0, 0, 1000])  # Top-left corner of the structure
+
+nodes = [Node(xyz=[0, 0, z]) for z in range(0, 1100, 100)]
+n1 = nodes[0]
+n2 = nodes[-1]
 
 # === Step 5: Define Cross-Sections ===
 # Define rectangular cross-sections for columns and beams
@@ -50,12 +53,15 @@ sec_column = RectangularSection(
 
 # === Step 6: Create Beam Elements ===
 # Define column elements connecting vertical nodes
-column_1 = BeamElement(
-    nodes=[n1, n2],  # Nodes defining the column
-    section=sec_column,  # Cross-section of the column
-    frame=[1, 0, 0],  # Local frame direction (vertical)
+segments = prt.add_elements(
+    [
+        BeamElement(nodes=[nodes[i], nodes[i + 1]], section=sec_column, frame=[1, 0, 0])
+        for i in range(len(nodes) - 1)
+    ]
 )
-column_1.plot_section()
+
+column_1 = segments[0]
+# column_1.plot_section()
 
 # === Step 7: Add Elements to the Deformable Part ===
 # Add the created elements (columns and beam) to the deformable part
@@ -80,13 +86,20 @@ prb = mdl.add_problem(problem=Problem(name="simple_column_Fx"))
 stp = prb.add_step(StaticStep())
 stp.combination = LoadCombination.SLS()
 # Add a node pattern to apply a load on node n2
-stp.add_node_pattern(nodes=[n2], x=-1 * units.kN, load_case="LL")
-stp.add_outputs((DisplacementFieldResults, SectionForcesFieldResults))
+stp.add_node_pattern(nodes=[n2], z=-1 * units.kN, load_case="LL")
+stp.add_outputs(
+    (
+        DisplacementFieldResults,
+        StressFieldResults,
+        # SectionForcesFieldResults
+        )
+    )
 
-mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
-stp.show_deformed(scale_results=1000, show_original=0.1, show_bcs=0.1)
+mdl.analyse_and_extract(
+    problems=[prb], path=TEMP, verbose=True, erase_data="armageddon"
+)
 # print(stp.section_forces_field.get_result_at(column_1).force_vector_1)
 
-print(column_1.forces(stp))
+# print(column_1.forces(stp))
 
-column_1.plot_stress_distribution(stp)
+# column_1.plot_stress_distribution(stp)
