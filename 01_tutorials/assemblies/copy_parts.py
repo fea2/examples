@@ -20,7 +20,8 @@ DATA = os.path.join(HERE, "..", "..", "00_data", "solids")
 TEMP = os.path.join(HERE, "..", "..", "temp")
 
 # Set the backend implementation
-compas_fea2.set_backend("compas_fea2_opensees")
+# compas_fea2.set_backend("compas_fea2_castem")
+compas_fea2.set_backend("compas_fea2_abaqus")
 
 mdl = Model(name="boxes")
 mat_steel = Steel.S355(units=units)
@@ -46,10 +47,11 @@ mdl.add_pin_bc(nodes=fixed_nodes)
 prb = mdl.add_problem(Problem(name="distributed_load"))
 stp_static = prb.add_static_step(name="static")
 stp_static.combination = LoadCombination.SLS()
-stp_static.add_gravity_load_pattern(parts=mdl.parts, name="gravity", load_case="DL")
+
+stp_static.add_gravity_load(parts=mdl.parts, g=9.81, name="gravity", load_case="DL")
 for part in mdl.parts:
     loaded_nodes = part.find_nodes_on_plane(part.top_plane, tol=10)
-    stp_static.add_node_pattern(
+    stp_static.add_uniform_node_load(
         name="uniform",
         nodes=loaded_nodes,
         z=-10 * units.kN / len(loaded_nodes),
@@ -58,7 +60,8 @@ for part in mdl.parts:
 stp_static.add_outputs([DisplacementFieldResults, ReactionFieldResults])
 
 
-prb.analyse_and_extract(path=TEMP, erase_data=True)
+
+prb.analyse_and_extract(path=TEMP, erase_data=True, output =True)
 
 viewer = ModelViewer(mdl)
 viewer.add_node_field_results(

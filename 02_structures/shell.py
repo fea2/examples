@@ -8,7 +8,7 @@ from compas_gmsh.models import MeshModel
 import compas_fea2
 from compas_fea2.model import Model, Part
 from compas_fea2.model import ShellSection, ElasticIsotropic
-from compas_fea2.problem import LoadCombination, ModalAnalysis
+from compas_fea2.problem import LoadCombination, ModalAnalysis, LoadField, ConcentratedLoad
 from compas_fea2.results import DisplacementFieldResults
 from compas_fea2_vedo.viewer import ModelViewer
 
@@ -17,7 +17,7 @@ from compas_fea2.units import units
 units = units(system="SI_mm")
 
 # Set the backend implementation
-compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_castem")
 
 HERE = os.path.dirname(__file__)
 DATA = os.path.join(HERE, "..", "00_data")
@@ -31,7 +31,7 @@ mesh.transform(Scale.from_factors([1000.0] * 3))
 
 # Use GMSH to discretize the geometry
 print("Generating discretization...")
-model = MeshModel.from_mesh(mesh, targetlength=100)
+model = MeshModel.from_mesh(mesh, targetlength=1000)
 model.heal()
 model.generate_mesh(2)
 compas_mesh = model.mesh_to_compas()
@@ -58,10 +58,10 @@ mdl.add_pin_bc(nodes=fixed_nodes)
 
 # Define the problem
 prb = mdl.add_problem(name="SLS")
-stp = prb.add_static_step()
+stp = prb.add_static_step(min_inc_size=0.1)
 stp.combination = LoadCombination.SLS()
-stp.add_node_pattern(nodes=prt.nodes, load_case="LL", x=0, y=0, z=-1 * units.kN)
-# stp.add_gravity_load_pattern(parts=prt, g=9.81 * units("m/s**2"), z=-1., load_case="DL")
+stp.add_uniform_node_load(nodes=prt.nodes, load_case="LL", x=0, y=0, z=-1 * units.kN)
+# stp.add_gravity_load(parts=prt, g=9.81 * units("m/s**2"), z=-1., load_case="DL")
 
 # Decide what information to save
 stp.add_outputs([DisplacementFieldResults])
@@ -71,6 +71,7 @@ stp.add_outputs([DisplacementFieldResults])
 
 
 # Run the analysis and show results
+mdl.assign_keys()
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True, erase_data=True)
 # # stp.show_displacements(step=stp, fast=True, show_vectors=0.5)
 # stp_modal.show_mode_shape(
@@ -83,8 +84,12 @@ mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True, erase_data=True
 #     # show_contour=True,
 # )
 
+# Show Results
+#Compas Viewer
+stp.show_deformed(scale_results=1000, show_original=0.3, show_bcs=0.5, show_loads=0.1)
+#Vedo Viewer
 viewer = ModelViewer(mdl)
 viewer.add_node_field_results(
-    stp.displacement_field, draw_cmap="viridis", draw_isolines=True
+    stp.displacement_field, draw_cmap="viridis", draw_vectors=10000
 )
 viewer.show()

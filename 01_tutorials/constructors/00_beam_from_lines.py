@@ -29,7 +29,8 @@ from compas_fea2.units import units
 units = units(system="SI_mm")
 
 # Set the backend implementation
-compas_fea2.set_backend("compas_fea2_opensees")
+# compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_castem")
 
 HERE = os.path.dirname(__file__)
 TEMP = os.path.join(HERE, "..", "..", "temp")
@@ -70,8 +71,8 @@ prb = mdl.add_problem(name="beam_line_Fz")
 stp = prb.add_static_step()
 stp.combination = LoadCombination.SLS()
 
-# Add a load at the end of the beam
-stp.add_node_pattern(
+# Add a uniform distributed load
+stp.add_uniform_node_load(
     nodes=prt.nodes.subgroup(condition=lambda node: node.x == (n - 1) * length),
     z=-1 * units.kN,
     load_case="LL",
@@ -79,7 +80,7 @@ stp.add_node_pattern(
 
 # Define field outputs
 stp.add_output(DisplacementFieldResults)
-mdl.show()
+# mdl.show()
 # ==============================================================================
 # Run the analysis and show results
 # ==============================================================================
@@ -97,8 +98,11 @@ print("Displacement vector with min z component: ", disp.get_min_result("z").vec
 print("Resultant displacement: ", disp.compute_resultant())
 
 # Show deformed shape
+#Compas Viewer
+stp.show_deformed(scale_results=1000, show_bcs=0.5, show_loads=0.1)
+#Vedo Viewer
 viewer = ModelViewer(mdl)
 viewer.add_node_field_results(
-    stp.displacement_field, draw_cmap="viridis", draw_vectors=100
+    stp.displacement_field, draw_cmap="viridis", draw_vectors=10000
 )
 viewer.show()

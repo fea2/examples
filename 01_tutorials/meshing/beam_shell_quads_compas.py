@@ -21,7 +21,8 @@ from compas_fea2.units import units
 
 units = units(system="SI_mm")
 
-compas_fea2.set_backend("compas_fea2_opensees")
+# compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_castem")
 
 HERE = os.path.dirname(__file__)
 TEMP = os.sep.join(HERE.split(os.sep)[:-2] + ["temp"])
@@ -45,19 +46,23 @@ stp = prb.add_static_step()
 stp.combination = LoadCombination.SLS()
 
 loaded_nodes = prt.nodes.subgroup(condition=lambda node: node.x == lx)
-stp.add_node_pattern(
+stp.add_uniform_node_load(
     nodes=loaded_nodes,
     # y=-(2 / len(loaded_nodes)) * units.kN,
     z=-(20 / len(loaded_nodes)) * units.kN,
     load_case="LL",
 )
-stp.add_outputs([DisplacementFieldResults, StressFieldResults, ReactionFieldResults])
+stp.add_outputs([DisplacementFieldResults, ReactionFieldResults])
 # Ask for field outputs
 # fout = FieldOutput(node_outputs=["U", "RF"], element_outputs=["S2D"])
 
 
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True, erase_data=True)
 
+# Show deformed shape
+#Compas Viewer
+stp.show_deformed(scale_results=1000, show_bcs=0.5, show_loads=0.1)
+#Vedo Viewer
 viewer = ModelViewer(mdl)
 viewer.add_node_field_results(
     stp.displacement_field, draw_cmap="viridis", draw_vectors=10000

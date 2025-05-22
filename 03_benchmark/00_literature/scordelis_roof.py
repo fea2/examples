@@ -3,20 +3,22 @@ import gmsh
 from math import radians, cos, sin
 from compas.geometry import Plane
 import compas_fea2
-from compas_fea2.model import Model, DeformablePart, Node, ShellElement
+from compas_fea2.model import Model, Part, Node, ShellElement
 from compas_fea2.model import ElasticIsotropic, ShellSection
 from compas_fea2.problem import (
     Problem,
     StaticStep,
-    LoadCombination,
-    DisplacementFieldOutput,
+    LoadCombination
 )
+from compas_fea2.results import DisplacementFieldResults, ReactionFieldResults
 from compas_fea2.units import units
 
 # --------------------------------------------------------------------------
 # Initialize COMPAS FEA2
 # --------------------------------------------------------------------------
-compas_fea2.set_backend("compas_fea2_opensees")
+# compas_fea2.set_backend("compas_fea2_opensees")
+# compas_fea2.set_backend("compas_fea2_castem")
+compas_fea2.set_backend("compas_fea2_abaqus")
 units = units(system="SI_mm")
 HERE = os.path.dirname(__file__)
 TEMP = os.sep.join(HERE.split(os.sep)[:-2] + ["temp"])
@@ -46,7 +48,7 @@ for span in span_divisions:
     for angle in angle_divisions:
         x = R * sin(angle)
         y = span
-        z = R * (1 - cos(angle))
+        z = -R * (1 - cos(angle))
         nodes.append(gmsh.model.geo.addPoint(x, y, z))
 
 # Create lines and define surfaces
@@ -103,12 +105,12 @@ def elements_from_gmsh(element_tags, element_node_tags, nodes, section):
 
 # Convert nodes and elements
 gmsh_nodes = nodes_from_gmsh(node_tags, node_coords)
-material = ElasticIsotropic(name="Concrete", E=30e3, v=0.0, density=2500)
+material = ElasticIsotropic(name="Concrete", E=30 * units("GPa"), v=0.0, density=2500)
 shell_section = ShellSection(name="ShellSection", t=t, material=material)
 
 # Create model and part
-mdl = Model(name="Scordelis-Lo Roof")
-part = DeformablePart(name="RoofPart")
+mdl = Model(name="Scordelis-Lo Roof2")
+part = Part(name="RoofPart")
 mdl.add_part(part)
 
 part.add_nodes(list(gmsh_nodes.values()))
@@ -124,32 +126,37 @@ gmsh.finalize()
 # --------------------------------------------------------------------------
 # Fix the curved edges
 curved_edges = part.find_nodes_on_plane(
-    Plane((0, 0, 0), (1, 0, 0))
-) + part.find_nodes_on_plane(Plane((0, 0, 0), (-1, 0, 0)))
+    Plane((0, 0, 0), (0, 1, 0))
+) + part.find_nodes_on_plane(Plane((0, L, 0), (0, 1, 0)))
 mdl.add_fix_bc(nodes=curved_edges)
+
+mdl.show()
 
 # --------------------------------------------------------------------------
 # Analysis
 # --------------------------------------------------------------------------
 problem = Problem(name="ScordelisLoProblem")
 mdl.add_problem(problem)
-step = problem.add_step(StaticStep(name="LoadStep"))
-step.add_outputs([DisplacementFieldOutput()])
+step = problem.add_step(StaticStep(name="LoadStep", min_inc_size=0.01))
+step.add_outputs([DisplacementFieldResults, ReactionFieldResults])
 
 # --------------------------------------------------------------------------
 # Loading
 # --------------------------------------------------------------------------
 # Apply uniform load to the surface
-load_nodes = part.nodes
-distributed_load = {node: (0, 0, q) for node in load_nodes}
 step.combination = LoadCombination.ULS()
+area_roof = 1
+step.add_uniform_node_load(nodes=part.nodes, load_case="LL", x=0, y=0, z=-q*area_roof/len(part.nodes) * units.kN)
+# polygon=
+# step.add_area_load(polygon, load_case=None, x=None, y=None, z=None, xx=None, yy=None, zz=None, axes="global")
+
 
 # Run analysis
-mdl.analyse_and_extract(problems=[problem], path=TEMP, verbose=True)
+mdl.analyse_and_extract(problems=[problem], path=TEMP, output=True)
 
 # Show Results
-# prb.show_reactions(stp, show_vectors=0.1, show_bcs=0.05, show_contours=0.5)
-problem.show_deformed(
+# step.show_reactions(show_vectors=0.1, show_bcs=0.05, show_contours=0.5)
+step.show_deformed(
     scale_results=10000, show_bcs=1, show_original=0.25, show_loads=10
 )
 # prb.show_displacements(show_vectors=1000, show_bcs=0.05, show_loads=0.1, show_contour=0.2)

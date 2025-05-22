@@ -32,7 +32,7 @@ from compas_fea2.units import units
 units = units(system="SI_mm")
 
 # Set the backend implementation
-compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_castem")
 
 HERE = os.path.dirname(__file__)
 TEMP = os.path.join(HERE, "..", "..", "temp")

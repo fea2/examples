@@ -33,7 +33,8 @@ from compas_fea2.results import (
 )
 from compas_fea2.units import units
 
-compas_fea2.set_backend("compas_fea2_opensees")
+# compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_castem")
 
 HERE = os.path.dirname(__file__)
 TEMP = os.path.join(HERE, "..", "..", "temp")
@@ -182,7 +183,7 @@ stp = StaticStep()
 stp.combination = LoadCombination.ULS()
 
 # Add a load at the top-left corner of the structure
-stp.add_node_pattern(
+stp.add_uniform_node_load(
     nodes=prt.find_nodes_on_plane(Plane([0, 0, nz * lz], [0, 0, 1])),
     # x=1 * units.kN,
     # y=1 * units.kN,
@@ -191,7 +192,7 @@ stp.add_node_pattern(
 )
 
 # Define field outputs
-fout = [DisplacementFieldResults, SectionForcesFieldResults, ReactionFieldResults]
+fout = [DisplacementFieldResults, ReactionFieldResults]
 stp.add_outputs(fout)
 
 # Set up the problem
@@ -216,5 +217,5 @@ react = stp.reaction_field
 
 # Show reactions
 # stp.show_displacements(stp, fast=True, show_bcs=0.5, show_loads=1, show_vectors=False)
-# stp.show_deformed(stp, scale_results=10, show_bcs=0.5)
+stp.show_deformed(scale_results=1000, show_bcs=0.5, show_loads=10)
 stp.show_reactions(stp, show_vectors=0.05, show_bcs=0.05, show_contours=0.5)

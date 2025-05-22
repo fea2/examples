@@ -30,7 +30,9 @@ from compas_fea2_vedo.viewer import ModelViewer
 units = units(system="SI_mm")
 
 # compas_fea2.set_backend("compas_fea2_opensees")
-compas_fea2.set_backend("compas_fea2_calculix")
+# compas_fea2.set_backend("compas_fea2_calculix")
+# compas_fea2.set_backend("compas_fea2_castem")
+compas_fea2.set_backend("compas_fea2_abaqus")
 
 HERE = os.path.dirname(__file__)
 TEMP = os.path.join(HERE, "..", "..", "..", "temp")
@@ -76,14 +78,14 @@ mdl.add_pin_bc(nodes=fixed_nodes)
 # ==============================================================================
 # Step 4: Define a modal analysis problem
 # ==============================================================================
-prb = mdl.add_problem(name="modal_analysis")
+prb = mdl.add_problem(name="modal_analysis4")
 stp = prb.add_step(ModalAnalysis(modes=6))
 
 # # ==============================================================================
 # # Step 5: Run the analysis and visualize the mode shapes
 # # ==============================================================================
-prb.analyse_and_extract(path=TEMP, erase_data='armageddon')
+prb.analyse_and_extract(path=TEMP, output=True)
 
-# viewer = ModelViewer(mdl, shape=(2, 2))
-# viewer.add_mode_shapes(list(stp.shapes)[:3], sf=1000)
-# viewer.show()
+viewer = ModelViewer(mdl, shape=(2, 2))
+viewer.add_mode_shapes(list(stp.shapes)[:3], sf=1000)
+viewer.show()

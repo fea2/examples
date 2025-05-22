@@ -109,7 +109,8 @@ TEMP = os.path.join(HERE, "..", "..", "temp")
 start_time = time.perf_counter()
 
 # Set the backend implementation
-compas_fea2.set_backend("compas_fea2_opensees")
+# compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_castem")
 print(f"Initialization took {time.perf_counter() - start_time:.4f} seconds")
 
 mdl = Model(name="boxes")
@@ -117,8 +118,7 @@ mat_steel = Steel.S355(units=units)
 sec = SolidSection(material=mat_steel)
 
 prt = Part.from_step_file(
-    # step_file=os.path.join(DATA, "box.stp"),
-    step_file="/Users/francesco/code/VAULTED/RFS_fea/00_stp_test_models/rfs-s-half.stp",
+    step_file=os.path.join(DATA, "solids", "box.stp"),
     meshsize_max=200,
     section=sec,
 )

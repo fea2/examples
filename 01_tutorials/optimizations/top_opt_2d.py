@@ -6,7 +6,8 @@ from compas_gmsh.models import MeshModel
 import compas_fea2
 from compas_fea2.model import Model, Part
 from compas_fea2.model import ElasticIsotropic, ShellSection
-from compas_fea2.problem import StaticStep, LoadCombination, Stress2DFieldOutput
+from compas_fea2.problem import StaticStep, LoadCombination
+from compas_fea2.results import StressFieldResults
 import numpy as np
 from compas_fea2.units import units
 import matplotlib.pyplot as plt
@@ -15,7 +16,7 @@ import matplotlib.pyplot as plt
 # UNITS: SI-mm
 # ==============================================================================
 units = units(system="SI_mm")
-compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_abaqus")
 
 HERE = os.path.dirname(__file__)
 TEMP = os.sep.join(HERE.split(os.sep)[:-2] + ["temp"])
@@ -133,15 +134,15 @@ for i in range(num_iterations):
     # Apply load to the right edge
     loaded_nodes = [n for n in prt.nodes if abs(n.x - lx) < tol_x]
     load_value = -(1.0 / len(loaded_nodes)) * units.kN
-    stp.add_node_pattern(nodes=loaded_nodes, z=load_value, load_case="LL")
-    stp.add_output(Stress2DFieldOutput())
+    stp.add_uniform_node_load(nodes=loaded_nodes, z=load_value, load_case="LL")
+    stp.add_output(StressFieldResults)
 
     # Update material properties based on current densities
     for idx, element in enumerate(prt.elements):
         element.section.material.E = densities[idx] ** penalty * base_E
 
     # Perform FEA analysis
-    prb.analyse_and_extract(path=TEMP, verbose=True)
+    prb.analyse_and_extract(path=TEMP,  output=True)
 
     # Extract & normalize strain energy density
     strain_energy_density = np.zeros(num_elements)

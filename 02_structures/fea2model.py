@@ -19,6 +19,7 @@ from compas_fea2.units import units
 
 units = units(system="SI_mm")
 compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_castem")
 
 HERE = os.path.dirname(__file__)
 TEMP = os.sep.join(HERE.split(os.sep)[:-1] + ["temp"])
@@ -71,7 +72,7 @@ mdl.add_fix_bc(nodes=fixed_nodes)
 # define a step
 stp = StaticStep()
 stp.combination = LoadCombination.ULS()
-stp.add_node_pattern(nodes=prt.nodes, y=1 * units.kN, load_case="LL")
+stp.add_uniform_node_load(nodes=prt.nodes, y=1 * units.kN, load_case="LL")
 stp.add_output(DisplacementFieldResults)
 
 # set-up the problem
@@ -81,6 +82,10 @@ prb.add_step(stp)
 mdl.add_problem(problem=prb)
 
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
+
+#Compas Viewer
+stp.show_deformed(scale_results=1000, show_bcs=0.5, show_loads=0.1)
+#Vedo Viewer
 viewer = ModelViewer(mdl)
 viewer.add_node_field_results(
     stp.displacement_field, draw_cmap="viridis", draw_vectors=10000
