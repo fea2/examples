@@ -18,8 +18,9 @@ from compas_fea2_vedo.viewer import ModelViewer
 
 units = units(system="SI_mm")
 
-compas_fea2.set_backend("compas_fea2_opensees")
+# compas_fea2.set_backend("compas_fea2_opensees")
 # compas_fea2.set_backend("compas_fea2_calculix")
+compas_fea2.set_backend("compas_fea2_castem")
 
 HERE = os.path.dirname(__file__)
 TEMP = os.sep.join(HERE.split(os.sep)[:-2] + ["temp"])
@@ -67,12 +68,12 @@ stp.combination = LoadCombination.SLS()
 
 # Add the load
 loaded_nodes = list(filter(lambda n: n.x == lx, prt.nodes))
-stp.add_node_pattern(
+stp.add_uniform_node_load(
     nodes=loaded_nodes, z=-(1 / len(loaded_nodes)) * units.kN, load_case="LL"
 )
 
 # Ask for field outputs
-stp.add_outputs([DisplacementFieldResults, StressFieldResults])
+stp.add_outputs([DisplacementFieldResults])
 # prb.summary()
 
 # Analyze and extracte results to SQLite database
@@ -80,10 +81,14 @@ mdl.analyse_and_extract(problems=[prb], path=TEMP, erase_data=True)
 stress = stp.stress_field
 disp = stp.displacement_field
 
+# Show deformed shape
+#Compas Viewer
+stp.show_deformed(scale_results=1000, show_bcs=0.5, show_loads=0.1)
+#Vedo Viewer
 viewer = ModelViewer(mdl)
-# viewer.add_node_field_results(disp, draw_cmap="viridis", draw_vectors=100)
+viewer.add_node_field_results(disp, draw_cmap="viridis", draw_vectors=100)
 # viewer.add_stress_tensors(stress, 1)
-viewer.add_principal_stress_vectors(stress, 100)
+# viewer.add_principal_stress_vectors(stress, 100)
 viewer.show()
 
 # # print(stp.reaction_field.get_max_result("z").vector)

@@ -11,7 +11,7 @@ from compas_fea2.problem import (
 from compas_fea2.results import DisplacementFieldResults, SectionForcesFieldResults
 from compas_fea2.units import units
 
-compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_castem")
 
 compas_fea2.POINT_OVERLAP = False
 
@@ -96,9 +96,9 @@ prb = mdl.add_problem(problem=Problem(name="simple_portal_Fx"))
 stp = prb.add_step(StaticStep())
 stp.combination = LoadCombination.ULS()
 # Add a node pattern to apply a load on node n2
-stp.add_node_pattern(nodes=[n2], x=1 * units.kN, load_case="LL")
-stp.add_outputs((SectionForcesFieldResults, DisplacementFieldResults))
+stp.add_uniform_node_load(nodes=[n2], x=1 * units.kN, load_case="LL")
+stp.add_outputs([DisplacementFieldResults])
 
-mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
+mdl.analyse_and_extract(problems=[prb], path=TEMP, output=True)
 stp.show_deformed(scale_results=1000, show_original=0.1, show_bcs=0.1)
-beam.plot_stress_distribution(stp)
+# beam.plot_stress_distribution(stp)

@@ -18,7 +18,8 @@ from compas_fea2.units import units
 
 units = units(system="SI_mm")
 
-compas_fea2.set_backend("compas_fea2_opensees")
+# compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_castem")
 
 HERE = os.path.dirname(__file__)
 TEMP = os.path.join(HERE, "..", "temp")
@@ -86,7 +87,7 @@ stp.combination = LoadCombination.SLS()
 
 # Add the load
 pt = prt.find_closest_nodes_to_point(poa_coordinates, 1, single=True)
-stp.add_node_pattern(nodes=pt, z=-10 * units.kN, load_case="LL")
+stp.add_uniform_node_load(nodes=pt, z=-10 * units.kN, load_case="LL")
 
 # Ask for field outputs
 stp.add_output(DisplacementFieldResults)
@@ -100,6 +101,11 @@ mdl.add_problem(problem=prb)
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 
 # Show Results
+#Compas Viewer
+stp.show_deformed(scale_results=1000, show_original=0.3, show_bcs=0.5, show_loads=0.1)
+#Vedo Viewer
 viewer = ModelViewer(mdl)
-viewer.add_node_field_results(stp.displacement_field, draw_cmap='viridis')
+viewer.add_node_field_results(
+    stp.displacement_field, draw_cmap="viridis", draw_vectors=10000
+)
 viewer.show()

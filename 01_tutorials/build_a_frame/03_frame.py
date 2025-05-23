@@ -17,7 +17,8 @@ from compas_fea2.units import units
 # 1. Initialize COMPAS FEA2 and Units
 # --------------------------------------------------------------------------
 # compas_fea2.set_backend("compas_fea2_opensees")
-compas_fea2.set_backend("compas_fea2_calculix")
+# compas_fea2.set_backend("compas_fea2_calculix")
+compas_fea2.set_backend("compas_fea2_castem")
 units = units(system="SI_mm")
 compas_fea2.POINT_OVERLAP = False
 
@@ -144,27 +145,29 @@ gmsh.finalize()
 # --------------------------------------------------------------------------
 mdl.add_fix_bc(nodes=prt.find_nodes_on_plane(Plane.worldXY()))  # Fix bottom nodes
 
+# mdl.show()
+
 # --------------------------------------------------------------------------
 # 7. Define Problem, Load, and Outputs
 # --------------------------------------------------------------------------
 prb = mdl.add_problem(Problem(name="table_problem"))
-stp = prb.add_step(StaticStep())
+stp = prb.add_step(StaticStep(min_inc_size=0.01))
 stp.combination = LoadCombination.ULS()
 
 # Add a distributed load on the tabletop shell
 load_nodes = prt.find_nodes_on_plane(Plane([0, 0, H], [0, 0, 1]))
-stp.add_node_pattern(
-    nodes=load_nodes, z=-30 * units.kN / len(load_nodes), load_case="LL"
+stp.add_uniform_node_load(
+    nodes=load_nodes, z=-3 * units.kN , load_case="LL"
 )
 
 # Add output fields
-stp.add_outputs([DisplacementFieldResults, StressFieldResults])
+stp.add_outputs([DisplacementFieldResults])
 # --------------------------------------------------------------------------
 # 8. Run Analysis and Show Results
 # --------------------------------------------------------------------------
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
-mdl.show()
+# mdl.show()
 # stp.show_stress(stp, show_bcs=0.05, show_vectors=1e2, plane="bottom")
 
-# prb.show_deformed(scale_results=1000, show_original=0.2, show_bcs=0.3, show_loads=10)
+stp.show_deformed(scale_results=1000, show_original=0.2, show_bcs=0.3, show_loads=10)
 # prb.show_displacements(stp, show_bcs=0.3, show_loads=10, show_contour=True, show_vectors=100)

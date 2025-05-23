@@ -8,8 +8,8 @@ from compas_gmsh.models import MeshModel
 import compas_fea2
 from compas_fea2.model import Model, Part
 from compas_fea2.model import ShellSection, ElasticIsotropic
-from compas_fea2.problem import LoadCombination
-from compas_fea2.results import DisplacementFieldResults
+from compas_fea2.problem import LoadCombination, ConcentratedLoad, LoadField
+from compas_fea2.results import DisplacementFieldResults, StressFieldResults
 from compas_fea2_vedo.viewer import ModelViewer
 
 from compas_fea2.units import units
@@ -17,7 +17,7 @@ from compas_fea2.units import units
 units = units(system="SI_mm")
 
 # Set the backend implementation
-compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_castem")
 
 # ==============================================================================
 # Define the data files
@@ -79,19 +79,22 @@ mdl.add_pin_bc(nodes=fixed_nodes)
 prb = mdl.add_problem(name="VerticalLoad")
 
 # Define the analysis step
-stp = prb.add_static_step(system="SparseGeneral")
+stp = prb.add_static_step(system="SparseGeneral", min_inc_size=0.1)
 stp.combination = LoadCombination.SLS()
 
 # Add a uniform load of 10 kN
 loaded_nodes = prt.nodes
-stp.add_node_pattern(
-    nodes=loaded_nodes, load_case="LL", x=0, y=0, z=-10 * units.kN / len(loaded_nodes)
-)
+stp.add_uniform_node_load(nodes=loaded_nodes, z=-10 * units.kN/ len(loaded_nodes), load_case="LL")
 
 # Decide what information to save
-stp.add_output(DisplacementFieldResults)
+stp.add_outputs([DisplacementFieldResults])
 
+
+# ==============================================================================
+# FEA2 Job
+# ==============================================================================
 # Run the analysis and show results
+
 mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 
 # # ==============================================================================
@@ -111,7 +114,10 @@ mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 # )
 # viewer.show()
 
-
+# Show Results
+#Compas Viewer
+stp.show_deformed(scale_results=100000, show_original=0.3, show_bcs=0.5, show_loads=10)
+#Vedo Viewer
 viewer = ModelViewer(mdl)
 viewer.add_node_field_results(
     stp.displacement_field, draw_cmap="viridis", draw_vectors=10000

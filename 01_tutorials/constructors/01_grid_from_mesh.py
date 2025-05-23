@@ -29,7 +29,8 @@ from compas_fea2.units import units
 units = units(system="SI_mm")
 
 # Set the backend implementation
-compas_fea2.set_backend("compas_fea2_opensees")
+# compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_castem")
 
 HERE = os.path.dirname(__file__)
 TEMP = os.path.join(HERE, "..", "..", "temp")
@@ -76,7 +77,7 @@ stp.combination = LoadCombination.SLS()
 
 # Add a load in the middle of the grid
 loaded_nodes = prt.nodes.subgroup(condition=lambda node: node.x == lx / 2)
-stp.add_node_pattern(nodes=loaded_nodes, z=-1 * units.kN, load_case="LL")
+stp.add_uniform_node_load(nodes=loaded_nodes, z=-10 * units.kN, load_case="LL")
 
 # Define field outputs
 
@@ -97,6 +98,9 @@ mdl.analyse_and_extract(problems=[prb], path=os.path.join(TEMP, prb.name), verbo
 # print("Min displacement [mm]: ", disp.get_min_result(2, stp).magnitude)
 
 # Show deformed shape
+#Compas Viewer
+stp.show_deformed(scale_results=1000, show_bcs=0.5, show_loads=0.1)
+#Vedo Viewer
 viewer = ModelViewer(mdl)
 viewer.add_node_field_results(
     stp.displacement_field, draw_cmap="viridis", draw_vectors=10000
