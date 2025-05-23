@@ -14,6 +14,7 @@ Steps:
 5. Run the analysis and visualize the mode shapes.
 """
 
+# %%
 import os
 
 from compas.datastructures import Mesh
@@ -37,6 +38,7 @@ compas_fea2.set_backend("compas_fea2_abaqus")
 HERE = os.path.dirname(__file__)
 TEMP = os.path.join(HERE, "..", "..", "..", "temp")
 
+# %%
 # ==============================================================================
 # Step 1: Define the plate geometry
 # ==============================================================================
@@ -47,6 +49,7 @@ ny = 3
 plate = Mesh.from_meshgrid(lx, nx, ly, ny)
 plate = plate.thickened((1 * units.cm).to_base_units().magnitude)
 
+# %%
 # ==============================================================================
 # Step 2: Create a deformable part from the mesh
 # ==============================================================================
@@ -70,22 +73,27 @@ mdl.add_part(prt)
 for n in prt.nodes:
     n.mass = [1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
 
+# %%
 # ==============================================================================
 # Step 3: Set boundary conditions at both ends of the plate
 # ==============================================================================
 fixed_nodes = prt.nodes.subgroup(condition=lambda node: node.x == 0 or node.x == lx)
 mdl.add_pin_bc(nodes=fixed_nodes)
+
+# %%
 # ==============================================================================
 # Step 4: Define a modal analysis problem
 # ==============================================================================
 prb = mdl.add_problem(name="modal_analysis4")
 stp = prb.add_step(ModalAnalysis(modes=6))
 
-# # ==============================================================================
-# # Step 5: Run the analysis and visualize the mode shapes
-# # ==============================================================================
+# %%
+# ==============================================================================
+# Step 5: Run the analysis and visualize the mode shapes
+# ==============================================================================
 prb.analyse_and_extract(path=TEMP, output=True)
 
+# %%
 viewer = ModelViewer(mdl, shape=(2, 2))
 viewer.add_mode_shapes(list(stp.shapes)[:3], sf=1000)
 viewer.show()
