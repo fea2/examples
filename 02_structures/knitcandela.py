@@ -17,7 +17,12 @@ from compas_fea2.units import units
 units = units(system="SI_mm")
 
 # Set the backend implementation
-compas_fea2.set_backend("compas_fea2_castem")
+compas_fea2.set_backend("compas_fea2_opensees")
+# compas_fea2.set_backend("compas_fea2_calculix")
+# compas_fea2.set_backend("compas_fea2_abaqus")
+# compas_fea2.set_backend("compas_fea2_castem")
+# compas_fea2.set_backend('compas_fea2_sofistik')
+
 
 # ==============================================================================
 # Define the data files
@@ -84,7 +89,7 @@ stp.combination = LoadCombination.SLS()
 
 # Add a uniform load of 10 kN
 loaded_nodes = prt.nodes
-stp.add_uniform_node_load(nodes=loaded_nodes, z=-10 * units.kN/ len(loaded_nodes), load_case="LL")
+stp.add_uniform_node_load(nodes=loaded_nodes, z=-10 * units.kN / len(loaded_nodes), load_case="LL")
 
 # Decide what information to save
 stp.add_outputs([DisplacementFieldResults])
@@ -115,9 +120,9 @@ mdl.analyse_and_extract(problems=[prb], path=TEMP, verbose=True)
 # viewer.show()
 
 # Show Results
-#Compas Viewer
+# Compas Viewer
 stp.show_deformed(scale_results=100000, show_original=0.3, show_bcs=0.5, show_loads=10)
-#Vedo Viewer
+# Vedo Viewer
 viewer = ModelViewer(mdl)
 viewer.add_node_field_results(
     stp.displacement_field, draw_cmap="viridis", draw_vectors=10000

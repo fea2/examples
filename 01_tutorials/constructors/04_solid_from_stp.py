@@ -32,10 +32,15 @@ from compas_fea2.units import units
 units = units(system="SI_mm")
 
 # Set the backend implementation
-compas_fea2.set_backend("compas_fea2_castem")
+# compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_calculix")
+# compas_fea2.set_backend("compas_fea2_abaqus")
+# compas_fea2.set_backend("compas_fea2_castem")
+# compas_fea2.set_backend('compas_fea2_sofistik')
 
 HERE = os.path.dirname(__file__)
 TEMP = os.path.join(HERE, "..", "..", "temp")
+DATA = os.path.join(HERE, "..", "..", "00_data")
 
 # ==============================================================================
 # Create a plate model
@@ -68,7 +73,7 @@ sec = SolidSection(material=mat)
 
 # Create a deformable part from the mesh
 prt = Part.from_step_file(
-    "/Users/francesco/code/fea2/examples/00_data/solids/box.stp",
+    DATA+"/solids/box.stp",
     section=sec,
     meshsize_max=100,
 )

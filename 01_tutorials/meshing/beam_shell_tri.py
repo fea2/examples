@@ -23,8 +23,12 @@ from compas_fea2_vedo.viewer import ModelViewer
 
 units = units(system="SI_mm")
 
+# Set the backend implementation
 # compas_fea2.set_backend("compas_fea2_opensees")
-compas_fea2.set_backend("compas_fea2_castem")
+compas_fea2.set_backend("compas_fea2_calculix")
+# compas_fea2.set_backend("compas_fea2_abaqus")
+# compas_fea2.set_backend("compas_fea2_castem")
+# compas_fea2.set_backend('compas_fea2_sofistik')
 
 HERE = os.path.dirname(__file__)
 TEMP = os.sep.join(HERE.split(os.sep)[:-2] + ["temp"])
@@ -61,12 +65,10 @@ prt.bounding_box
 mdl.add_part(prt)
 
 # Set boundary conditions in the corners
-for node in prt.nodes:
-    if node.x == 0:
-        mdl.add_fix_bc(nodes=[node])
+mdl.add_fix_bc(nodes=prt.nodes.subgroup(lambda n: n.x == 0))
 
 mdl.summary()
-# mdl.show(draw_bcs=0.1)
+mdl.show(draw_bcs=0.1)
 # viewer = ModelViewer(mdl)
 # viewer.show()
 

@@ -15,8 +15,6 @@ HERE = os.path.dirname(__file__)
 DATA = os.path.join(HERE, "..", "..", "00_data", "solids")
 TEMP = os.path.join(HERE, "..", "..", "temp")
 
-# Set the backend implementation
-compas_fea2.set_backend("compas_fea2_opensees")
 
 mdl = Model(name="boxes")
 mat_steel = Steel.S355(units=units)

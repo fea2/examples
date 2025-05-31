@@ -16,9 +16,13 @@ from compas_fea2.units import units
 # --------------------------------------------------------------------------
 # 1. Initialize COMPAS FEA2 and Units
 # --------------------------------------------------------------------------
+# Set the backend implementation
 # compas_fea2.set_backend("compas_fea2_opensees")
-# compas_fea2.set_backend("compas_fea2_calculix")
-compas_fea2.set_backend("compas_fea2_castem")
+compas_fea2.set_backend("compas_fea2_calculix")
+# compas_fea2.set_backend("compas_fea2_abaqus")
+# compas_fea2.set_backend("compas_fea2_castem")
+# compas_fea2.set_backend('compas_fea2_sofistik')
+
 units = units(system="SI_mm")
 compas_fea2.POINT_OVERLAP = False
 

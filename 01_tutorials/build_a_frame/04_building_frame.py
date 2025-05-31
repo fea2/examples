@@ -33,8 +33,12 @@ from compas_fea2.results import (
 )
 from compas_fea2.units import units
 
+# Set the backend implementation
 # compas_fea2.set_backend("compas_fea2_opensees")
-compas_fea2.set_backend("compas_fea2_castem")
+compas_fea2.set_backend("compas_fea2_calculix")
+# compas_fea2.set_backend("compas_fea2_abaqus")
+# compas_fea2.set_backend("compas_fea2_castem")
+# compas_fea2.set_backend('compas_fea2_sofistik')
 
 HERE = os.path.dirname(__file__)
 TEMP = os.path.join(HERE, "..", "..", "temp")

@@ -6,7 +6,7 @@ from compas_fea2.units import units
 
 from compas.geometry import Translation
 
-from compas_fea2.utilities.interfaces_numpy import mesh_mesh_interfaces
+# from compas_fea2.utilities.interfaces_numpy import mesh_mesh_interfaces
 
 from compas_fea2_vedo.viewer import ModelViewer
 

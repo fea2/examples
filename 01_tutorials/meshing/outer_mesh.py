@@ -110,7 +110,11 @@ start_time = time.perf_counter()
 
 # Set the backend implementation
 # compas_fea2.set_backend("compas_fea2_opensees")
-compas_fea2.set_backend("compas_fea2_castem")
+compas_fea2.set_backend("compas_fea2_calculix")
+# compas_fea2.set_backend("compas_fea2_abaqus")
+# compas_fea2.set_backend("compas_fea2_castem")
+# compas_fea2.set_backend('compas_fea2_sofistik')
+
 print(f"Initialization took {time.perf_counter() - start_time:.4f} seconds")
 
 mdl = Model(name="boxes")

@@ -14,8 +14,11 @@ from compas_fea2.units import units
 
 units = units(system="SI_mm")
 
+# Set the backend implementation
 # compas_fea2.set_backend("compas_fea2_opensees")
-compas_fea2.set_backend("compas_fea2_castem")
+compas_fea2.set_backend("compas_fea2_calculix")
+# compas_fea2.set_backend("compas_fea2_abaqus")
+# compas_fea2.set_backend("compas_fea2_castem")
 # compas_fea2.set_backend('compas_fea2_sofistik')
 
 HERE = os.path.dirname(__file__)

@@ -18,9 +18,12 @@ from compas_fea2_vedo.viewer import ModelViewer
 
 units = units(system="SI_mm")
 
+# Set the backend implementation
 # compas_fea2.set_backend("compas_fea2_opensees")
-# compas_fea2.set_backend("compas_fea2_calculix")
-compas_fea2.set_backend("compas_fea2_castem")
+compas_fea2.set_backend("compas_fea2_calculix")
+# compas_fea2.set_backend("compas_fea2_abaqus")
+# compas_fea2.set_backend("compas_fea2_castem")
+# compas_fea2.set_backend('compas_fea2_sofistik')
 
 HERE = os.path.dirname(__file__)
 TEMP = os.sep.join(HERE.split(os.sep)[:-2] + ["temp"])
@@ -60,7 +63,7 @@ fixed_nodes = list(filter(lambda n: n.x == 0, prt.nodes))
 mdl.add_pin_bc(fixed_nodes)
 
 mdl.summary()
-# mdl.show(draw_bcs=0.1)
+mdl.show(draw_bcs=0.1)
 
 prb = mdl.add_problem(name="SLS")
 stp = prb.add_static_step(system="SparseGeneral", name="static")
@@ -82,9 +85,9 @@ stress = stp.stress_field
 disp = stp.displacement_field
 
 # Show deformed shape
-#Compas Viewer
+# Compas Viewer
 stp.show_deformed(scale_results=1000, show_bcs=0.5, show_loads=0.1)
-#Vedo Viewer
+# Vedo Viewer
 viewer = ModelViewer(mdl)
 viewer.add_node_field_results(disp, draw_cmap="viridis", draw_vectors=100)
 # viewer.add_stress_tensors(stress, 1)

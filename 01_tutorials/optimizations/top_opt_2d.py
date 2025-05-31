@@ -16,7 +16,13 @@ import matplotlib.pyplot as plt
 # UNITS: SI-mm
 # ==============================================================================
 units = units(system="SI_mm")
-compas_fea2.set_backend("compas_fea2_abaqus")
+
+# Set the backend implementation
+# compas_fea2.set_backend("compas_fea2_opensees")
+compas_fea2.set_backend("compas_fea2_calculix")
+# compas_fea2.set_backend("compas_fea2_abaqus")
+# compas_fea2.set_backend("compas_fea2_castem")
+# compas_fea2.set_backend('compas_fea2_sofistik')
 
 HERE = os.path.dirname(__file__)
 TEMP = os.sep.join(HERE.split(os.sep)[:-2] + ["temp"])
