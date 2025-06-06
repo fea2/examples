@@ -17,6 +17,7 @@ import os
 
 from compas.datastructures import Mesh
 from compas_gmsh.models import MeshModel
+from compas.geometry import Point, Line
 
 import compas_fea2
 from compas_fea2.model import Model, Part
@@ -112,3 +113,7 @@ viewer.add_node_field_results(
     stp.displacement_field, draw_cmap="viridis", draw_vectors=100
 )
 viewer.show()
+
+#Plot deflection mid-width
+line = Line(Point(0, ly/2, 0), Point(lx, ly/2, 0))
+stp.plot_deflection_along_line(line, n_divide=100)
