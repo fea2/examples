@@ -3,7 +3,7 @@ import os
 
 from compas.geometry import Frame, Point, Line
 
-from compas_fea2.model import Model, RectangularSection, ElasticIsotropic, RigidLinkConnector, BeamElement, Part
+from compas_fea2.model import Model, RectangularSection, ElasticIsotropic, RigidLinkConnector, Part
 from compas_fea2.problem import Problem, StaticStep, LoadCombination
 from compas_fea2.results import DisplacementFieldResults, ReactionFieldResults
 from compas_fea2.units import units
@@ -12,7 +12,7 @@ from compas_fea2.units import units
 #========================================
 # Backend, paths & units
 #========================================
-# Initialisation du plugin et paths
+# Initialization of plugins and paths
 compas_fea2.set_backend("compas_fea2_castem")
 # compas_fea2.set_backend("compas_fea2_abaqus")
 compas_fea2.POINT_OVERLAP = False
@@ -22,11 +22,11 @@ TEMP = os.path.join(HERE, "..", "temp")
 # Unit system
 units = units(system="SI_mm")  # SI units with length in millimeters
 
-# Define an elastic isotropic material (e.g., concrete or steel)
+# Define an elastic isotropic material (timber, C24)
 mat = ElasticIsotropic(
-    E=11 * units("GPa"),  # Young's modulus (30 GPa)
-    v=0,  # Poisson's ratio (dimensionless)
-    density=0 * units("kg/m**3"),  # Density (2400 kg/m³)
+    E=11 * units("GPa"),  # Young's modulus (11 GPa)
+    v=0.35,  # Poisson's ratio (dimensionless)
+    density=420 * units("kg/m**3"),  # Density (420 kg/m³)
 )
 
 #========================================
@@ -45,14 +45,14 @@ p24 = Point(4000, 0, 2000)
 p33 = Point(3000, 0, 3000)
 
 # Lines
-lines = [
-    Line(p00, p06), #0 - tie beam
-    Line(p03, p33), #1 -  king post
-    Line(p00, p33), #2 - left principal rafter
-    Line(p33, p06), #3 - right principal rafter
-    Line(p22, p13), #4 - left strut
-    Line(p13, p24) #5 - right strut
-]
+lines = {
+    "Part0": Line(p00, p06), #Part 0 - tie beam
+    "Part1": Line(p03, p33), #Part 1 -  king post
+    "Part2": Line(p00, p33), #Part 2 - left principal rafter
+    "Part3": Line(p33, p06), #Part 3 - right principal rafter
+    "Part4": Line(p22, p13), #Part 4 - left strut
+    "Part5": Line(p13, p24)  #Part 5 - right strut
+}
 
 # Section
 sec = RectangularSection(
@@ -102,15 +102,12 @@ def frame_oriented(line, gamma=0):
 
 # part definition from discretizing method
 parts = []
-for line in lines :
-    prt = parts.append(Part.from_compas_lines_discretized([line], 500, BeamElement, sec, frame_oriented(line, gamma=0)))
-mdl.add_parts(parts)
-
-mdl.add_pin_bc(nodes=[parts[0].find_closest_nodes_to_point(p00, 1).sorted[0]])
-
+for partname, line in lines.items() :
+    prt = mdl.add_part(Part.from_compas_lines_discretized(lines=[line], targetlength=500, element_model='BeamElement', section=sec, frame=frame_oriented(line, gamma=0), name=partname))
+    parts.append(prt)
 
 # Definition of the connection between the parts
-#creation of a list with information connections
+# list with data for connector definition between parts
 connection_data= [
     #1st part   #2nd part    #common point  #description
     [0,         1,          p03],           #tie beam/king post
@@ -125,13 +122,19 @@ connection_data= [
 ]
 
 for data in connection_data :
-    connector = parts[data[0]].create_connector_node(parts[data[1]].find_closest_nodes_to_point(data[2], 1).sorted[0])
+    first_part = mdl.find_part_by_name(name='name'+str(connection_data[0]))
+    second_part = mdl.find_part_by_name(name='name'+str(connection_data[1]))
+    common_point = data[2]
+    connector = first_part.create_connector_node(second_part.find_closest_nodes_to_point(common_point, 1, single=True))
     mdl.add_connector(RigidLinkConnector(nodes=connector, dofs="beam"))
 
 # Set boundary conditions and insure out-of-plane stability
-mdl.add_pin_bc(nodes=[parts[0].find_closest_nodes_to_point(p00, 1).sorted[0]])
-mdl.add_rollerXY_bc(nodes=[parts[0].find_closest_nodes_to_point(p06, 1).sorted[0]])
-mdl.add_rollerYZ_bc(nodes=[parts[1].find_closest_nodes_to_point(p33, 1).sorted[0]])
+
+tie_beam = mdl.find_part_by_name(name='Part0')
+king_post = mdl.find_part_by_name(name='Part1')
+mdl.add_pin_bc(nodes=[tie_beam.find_closest_nodes_to_point(p00, 1, single=True)])
+mdl.add_rollerXY_bc(nodes=[tie_beam.find_closest_nodes_to_point(p06, 1, single=True)])
+mdl.add_rollerYZ_bc(nodes=[king_post.find_closest_nodes_to_point(p33, 1, single=True)])
 
 # Visualize the model
 # mdl.show()
@@ -146,9 +149,11 @@ stp = prb.add_step(StaticStep())
 stp.combination = LoadCombination.SLS()
 
 # Add a node pattern to apply a load on node n2
+rafter_left = mdl.find_part_by_name(name='Part2')
+rafter_right = mdl.find_part_by_name(name='Part3')
 stp.add_uniform_node_load(
-    nodes=parts[2].nodes+parts[3].nodes,
-    z =-1000 *units.kN,
+    nodes=rafter_left.nodes + rafter_right.nodes,
+    z=-1000 *units.kN,
     load_case="LL",
 )
 
