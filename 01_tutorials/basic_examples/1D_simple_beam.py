@@ -4,16 +4,10 @@ import compas_fea2
 
 from compas.geometry import Point, Line
 
-from compas_fea2.model import Model, Part
-from compas_fea2.model import ElasticIsotropic, BeamElement, RectangularSection
-from compas_fea2.problem import (
-    Problem,
-    StaticStep,
-    LoadCombination,
-)
+from compas_fea2.model import Model, Part, ElasticIsotropic, RectangularSection
+from compas_fea2.problem import Problem, StaticStep, LoadCombination
 from compas_fea2.results import DisplacementFieldResults, ReactionFieldResults
 from compas_fea2.units import units
-
 
 #--------------------------------------
 # Backend
@@ -37,7 +31,9 @@ units = units(system="SI_mm")  # SI units with length in millimeters
 mdl = Model(name="simplebeam")
 
 # Geometry with compas.geometry objects
-lx = 5000
+# The geometry being defined through compas.geometry, the units pint methods can't be used
+# The users must care to the consistency of the units
+lx = 5000 #mm 
 
 p1 = Point(x = 0, y=0, z=0)
 p2 = Point(x = lx , y=0, z=0) 
@@ -46,16 +42,19 @@ l1 = Line(p1, p2)
 # Material and section
 
 mat = ElasticIsotropic(
-    E=10 * units("GPa"),  # Young's modulus (30 GPa)
+    E=30 * units("GPa"),  # Young's modulus (30 GPa)
     v=0.2,  # Poisson's ratio (dimensionless)
-    density=2500 * units("kg/m**3"),  # Density (2400 kg/m³)
+    density=2400 * units("kg/m**3"),  # Density (2400 kg/m³)
 )
 
-sec = RectangularSection(w= 12 * units.cm, h=10 * units.cm, material= mat)
+sec = RectangularSection(
+    w= 12 * units.cm, #width
+    h=10 * units.cm, # height
+    material= mat 
+)
 
 # Meshing and creation of part with specific method
-prt = Part.from_compas_lines_discretized(lines=[l1], targetlength=10, element_class=BeamElement, section=sec, frame=[0,1,0])
-
+prt = Part.from_compas_lines_discretized(lines=[l1], targetlength=10, element_model='BeamElement', section=sec, frame=[0,1,0])
 mdl.add_part(prt)
 
 # Meshing and creation of part with specific method

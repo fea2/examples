@@ -6,16 +6,15 @@ from compas.geometry import Point, Line,  Cylinder
 from compas_gmsh.models import ShapeModel
 
 import compas_fea2
-from compas_fea2.model import Model, Part
-from compas_fea2.model import ElasticIsotropic, SolidSection
-from compas_fea2.problem import LoadCombination, ConcentratedLoad, NodeLoadField
-from compas_fea2.results import DisplacementFieldResults, SectionForcesFieldResults, ReactionFieldResults
+from compas_fea2.model import Model, Part, ElasticIsotropic, SolidSection
+from compas_fea2.problem import LoadCombination
+from compas_fea2.results import DisplacementFieldResults, ReactionFieldResults
 from compas_fea2_vedo.viewer import ModelViewer
 from compas_fea2.units import units
 
 
 #--------------------------------------
-# Backend
+# Backends, units and paths
 #--------------------------------------
 compas_fea2.set_backend("compas_fea2_castem")
 # compas_fea2.set_backend("compas_fea2_sofistik")
@@ -27,25 +26,27 @@ TEMP = os.path.join(HERE, "..", "..", "temp")
 
 
 # ==============================================================================
-# Create a cylinder and mesh
+# Create a cylinder and meshing
 # ==============================================================================
 #geometry parameters
-r = 1
-h = 4
+r = 1 #m
+h = 4 #m
 
 #compas.geometry objects
 pb = Point(0,0,0)
 ph = Point(0,0,h)
 l_height = Line(pb, ph)
 
-#creation of cube (box) object in compas
+#definition of cylinder object in compas.geometry
+#the centroid of the object is the origin of the frame O=(0, 0, 0,)
 cylinder1 = Cylinder.from_line_and_radius(line=l_height, radius=r)
 
-#creation of a gmsh model of the geometry
+#mesh definition with compas_gmsh 
 print('Beginning of gmsh meshing')
 compasgmsh_model = ShapeModel(name='cylinder1')
 compasgmsh_model.add_cylinder(cylinder1)
-compasgmsh_model.options.mesh.lmax = 0.2
+compasgmsh_model.options.mesh.lmax = h/20
+compasgmsh_model.options.mesh.lmin = h/20
 compasgmsh_model.generate_mesh(3)
 print('End of gmsh meshing')
 
@@ -56,24 +57,23 @@ print('End of gmsh meshing')
 mdl = Model(name="steel_shell")
 
 # Define material properties
-mat = ElasticIsotropic(E=200000 * units.Pa, v=0.3, density=2500)
+mat = ElasticIsotropic(E=300000 * units.Pa, 
+                       v=0.3, 
+                       density=2500 * units("kg/m**3"))
 
 # Define the shell section
 sec = SolidSection(material=mat)
 
 # Create a deformable part from the mesh of gmsh
 prt = Part.from_gmsh(gmshModel=compasgmsh_model, section=sec)
-
 mdl.add_part(prt)
 
-
-# Set boundary conditions at both ends of the shell
-# Fix the base
+# Boundary conditions : the base is fixed
 bottom_nodes = prt.nodes.subgroup(lambda n: n.z == 0)
 mdl.add_fix_bc(nodes=bottom_nodes)
 
-# Print model summary
-# mdl.summary())
+# Print model summary and visualize the model
+# mdl.summary()
 # mdl.show(show_bcs=0.001)
 
 # ==============================================================================
